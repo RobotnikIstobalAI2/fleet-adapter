@@ -13,5 +13,5 @@ cd fleet-adapter/docker
 
 
 <p align="center">
-  <img src="doc/fleetadapter.png" height="575" />
+  <img src="doc/fleetadapter.png" height="475" />
 </p>
