@@ -251,8 +251,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         #time.sleep(1.0)
 
                 elif self.state == RobotState.WAITING:
-                    self.sleep_for(0.01)
-                    #time.sleep(1)
+                    #self.sleep_for(1.0)
+                    time.sleep(1)
                     time_now = self.adapter.now()
                     with self._lock:
                         if self.target_waypoint is not None:
@@ -268,8 +268,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                         self.path_index, timedelta(seconds=0.0))
 
                 elif self.state == RobotState.MOVING:
-                    self.sleep_for(0.01)
-                    #time.sleep(1)
+                    #self.sleep_for(1.0)
+                    time.sleep(1)
                     # Check if we have reached the target
                     with self._lock:
                         if (self.api.navigation_completed()):

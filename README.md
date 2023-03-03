@@ -1,6 +1,6 @@
 # fleet-adapter
 
-Lanza el fleet adapter. Este paso, añadirá elementos en la visualización que se lanza con rmf-core.
+Launch fleet-adapter.  This step adds new elements at the visualization that is started with rmf-core.
 
 ## Pasos a seguir
 
