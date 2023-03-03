@@ -97,7 +97,7 @@ COPY docker/ros_entrypoint.sh /
 
 WORKDIR /
 RUN sudo chmod +x ros_entrypoint.sh
-CMD bash -c "/ros_entrypoint.sh ros2 run fleet_adapter_template fleet_adapter -c /home/ros/config/config_rbvogui.yaml  -n /home/ros/graph/0.yaml"
+CMD bash -c "/ros_entrypoint.sh ros2 run fleet_adapter_template fleet_adapter -c /home/ros/config/config_rbkairos.yaml  -n /home/ros/graph/0.yaml"
 
 #CMD bash -c "while true; do sleep 600; done;"
 
