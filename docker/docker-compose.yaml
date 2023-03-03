@@ -1,0 +1,23 @@
+---
+version: "3.7"
+services:
+  base:
+    image: fleet-adapter:galactic
+    container_name: fleet-adapter-galactic-ins
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    network_mode: "host"
+    stdin_open: true
+    tty: true
+    privileged: true
+    environment:
+      DISPLAY: $DISPLAY
+      QT_X11_NO_MITSHM: 1
+      LIBGL_ALWAYS_INDIRECT: 0
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+    devices:
+      - "/dev/dri"
