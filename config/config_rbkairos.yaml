@@ -50,7 +50,7 @@ robots:
     rmf_config:
       robot_state_update_frequency: 0.5
       start:
-        map_name: "floor"
+        map_name: "robot_map"
         waypoint: "parking1"
         orientation: 0.0
       charger:
