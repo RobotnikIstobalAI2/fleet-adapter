@@ -82,6 +82,10 @@ class RobotAPI:
         self.y_goal = 0
         #Dictionary robot-pose
         self.robotpose = {}
+        #Dictionary robot-id
+        self.robotid = {}
+        #Current goal variable
+        self.current_goal = False
         # Test connectivity
         connected = self.check_connection()
         if connected:
@@ -92,7 +96,7 @@ class RobotAPI:
         #MQTT Connection
         self.client = self.connect_mqtt()
         self.client.loop_start()
-        self.client.subscribe("robot_a/#")
+        self.client.subscribe("pose/#")
 
     def connect_mqtt(self):
         def on_connect(client, userdate, flags, rc):
@@ -102,14 +106,14 @@ class RobotAPI:
                 print("Failed to connect")
         client = mqtt.Client('fleet-adapter')
         client.on_connect = on_connect
-        client.message_callback_add('robot_a/pose', self.on_message_pose)
+        client.message_callback_add('pose/#', self.on_message_pose)
         client.connect('127.0.0.1', 1883)
         return client
 
     def on_message_pose(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         pose=json.loads(decoded_message)['pose']['pose']
-        robot = msg.topic.split("/")[0]
+        robot = msg.topic.split("/")[1]
         print(robot)
         print(pose)
         self.robotpose[robot] = pose
@@ -131,7 +135,6 @@ class RobotAPI:
             self.robotpose[robot_name]['orientation']['x'], self.robotpose[robot_name]['orientation']['y'],
             self.robotpose[robot_name]['orientation']['z'], self.robotpose[robot_name]['orientation']['w'])[2]
         print([self.x, self.y, self.theta])
-        self.navigate("robot_a",[1,1,1],"robot_map")
         if self.x != None and self.y != None and self.theta != None:
             return [self.x,self.y,self.theta]
         else:
@@ -162,7 +165,8 @@ class RobotAPI:
                                                 "w":orientation[3]
                                             }}}}}
         print(json.dumps(data))
-        self.client.publish("robot_a/goal",json.dumps(data))
+        #self.client.publish("robot_a/goal",json.dumps(data))
+        #self.current_goal = True
         # ------------------------ #
         return False
 
@@ -180,7 +184,9 @@ class RobotAPI:
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
         # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
+        #print("Stop")
+        #self.current_goal = False
+        #self.client_move.cancel_all_goals()
         # ------------------------ #
         #return False
         return False
@@ -197,7 +203,10 @@ class RobotAPI:
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
+        if math.sqrt((self.x_goal-self.x)**2 + (self.y_goal-self.y)**2) < 0.5 and self.current_goal:
+            print("Navigation completed!")
+            self.current_goal = False
+            return True
         # ------------------------ #
         return False
 
