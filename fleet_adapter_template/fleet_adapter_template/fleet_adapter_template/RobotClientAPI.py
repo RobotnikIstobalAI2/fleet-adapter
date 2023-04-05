@@ -134,8 +134,8 @@ class RobotAPI:
         self.theta = euler_from_quaternion(
             self.robotpose[robot_name]['orientation']['x'], self.robotpose[robot_name]['orientation']['y'],
             self.robotpose[robot_name]['orientation']['z'], self.robotpose[robot_name]['orientation']['w'])[2]
-        print([self.x, self.y, self.theta])
         if self.x != None and self.y != None and self.theta != None:
+            #self.navigate("robot_a", [1, 1, 0], "robot_map")
             return [self.x,self.y,self.theta]
         else:
             return None
@@ -165,8 +165,8 @@ class RobotAPI:
                                                 "w":orientation[3]
                                             }}}}}
         print(json.dumps(data))
-        #self.client.publish("robot_a/goal",json.dumps(data))
-        #self.current_goal = True
+        self.client.publish("goal/"+robot_name ,json.dumps(data))
+        self.current_goal = True
         # ------------------------ #
         return False
 
