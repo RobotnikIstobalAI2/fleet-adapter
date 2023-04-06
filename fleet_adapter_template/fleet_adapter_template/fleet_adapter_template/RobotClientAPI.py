@@ -131,6 +131,7 @@ class RobotAPI:
     def on_message_result(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         result=json.loads(decoded_message)['status']['status']
+        print(result)
         robot = msg.topic.split("/")[1]
         self.robotresult[robot] = result
 
@@ -213,10 +214,11 @@ class RobotAPI:
     def navigation_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
-        if (self.robotresult[robot_name] == 3) and self.current_goal: 
-            self.current_goal = False
+        if (self.robotresult[robot_name] == 3): 
+            print("Navigation completed")
             return True
         else:
+            print("Navigation no completed")
             return False
 
     def process_completed(self, robot_name: str):
