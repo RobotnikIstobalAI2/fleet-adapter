@@ -82,6 +82,10 @@ class RobotAPI:
         self.y_goal = 0
         #Dictionary robot-pose
         self.robotpose = {}
+        #Dictionary robot-feedback
+        self.robotfeedback = {}
+        #Dictionary robot-status
+        self.robotresult= {}
         #Current goal variable
         self.current_goal = False
         # Test connectivity
@@ -95,6 +99,8 @@ class RobotAPI:
         self.client = self.connect_mqtt()
         self.client.loop_start()
         self.client.subscribe("pose/#")
+        self.client.subscribe("feedback/#")
+        self.client.subscribe("result/#")
 
     def connect_mqtt(self):
         def on_connect(client, userdate, flags, rc):
@@ -105,6 +111,8 @@ class RobotAPI:
         client = mqtt.Client('fleet-adapter')
         client.on_connect = on_connect
         client.message_callback_add('pose/#', self.on_message_pose)
+        client.message_callback_add('feedback/#', self.on_message_feedback)
+        client.message_callback_add('result/#', self.on_message_result)
         client.connect('127.0.0.1', 1883)
         return client
 
@@ -112,9 +120,19 @@ class RobotAPI:
         decoded_message=str(msg.payload.decode("utf-8"))
         pose=json.loads(decoded_message)['pose']['pose']
         robot = msg.topic.split("/")[1]
-        print(robot)
-        print(pose)
         self.robotpose[robot] = pose
+
+    def on_message_feedback(self, client, userdata, msg):
+        decoded_message=str(msg.payload.decode("utf-8"))
+        feedback=json.loads(decoded_message)['status']['status']
+        robot = msg.topic.split("/")[1]
+        self.robotfeedback[robot] = feedback
+
+    def on_message_result(self, client, userdata, msg):
+        decoded_message=str(msg.payload.decode("utf-8"))
+        result=json.loads(decoded_message)['status']['status']
+        robot = msg.topic.split("/")[1]
+        self.robotresult[robot] = result
 
     def check_connection(self):
         ''' Return True if connection to the robot API server is successful'''
@@ -126,7 +144,6 @@ class RobotAPI:
     def position(self, robot_name: str):
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
             None if any errors are encountered'''
-        # ------------------------ #
         self.x = self.robotpose[robot_name]['position']['x']
         self.y = self.robotpose[robot_name]['position']['y']
         self.theta = euler_from_quaternion(
@@ -142,8 +159,6 @@ class RobotAPI:
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
             else False'''
-        # ------------------------ #
-        print("Navigating: ", robot_name, pose, map_name)
         self.x_goal = pose[0]
         self.y_goal = pose[1]
         orientation = quaternion_from_euler(0,0,pose[2])
@@ -162,9 +177,12 @@ class RobotAPI:
                                                 "w":orientation[3]
                                             }}}}}
         self.client.publish("goal/"+robot_name ,json.dumps(data))
-        self.current_goal = True
-        # ------------------------ #
-        return True
+        if self.robotfeedback[robot_name] == 1:
+            self.current_goal = True
+            return True
+        else:
+            self.current_goal = False
+            return False
 
     def start_process(self, robot_name: str, process: str, map_name: str):
         ''' Request the robot to begin a process. This is specific to the robot
@@ -179,11 +197,9 @@ class RobotAPI:
     def stop(self, robot_name: str):
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
-        # ------------------------ #
         self.current_goal = False
         cancel_all_goals = {"id":""}
         self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals))
-        # ------------------------ #
         return True
 
     def navigation_remaining_duration(self, robot_name: str):
@@ -197,13 +213,11 @@ class RobotAPI:
     def navigation_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
-        # ------------------------ #
-        if math.sqrt((self.x_goal-self.x)**2 + (self.y_goal-self.y)**2) < 0.5 and self.current_goal:
-            print("Navigation completed!")
+        if (self.robotresult[robot_name] == 3) and self.current_goal: 
             self.current_goal = False
             return True
-        # ------------------------ #
-        return False
+        else:
+            return False
 
     def process_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
@@ -216,7 +230,4 @@ class RobotAPI:
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
         return 0.8
