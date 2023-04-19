@@ -6,8 +6,10 @@ Launch fleet-adapter.  This step adds new elements at the visualization that is 
 
 ```bash
 git clone https://github.com/RobotnikIstobalAI2/fleet-adapter.git
-cd fleet-adapter/docker
-./run-docker.sh
+cd fleet-adapter
+git checkout humble-devel
+cd docker
+docker compose up
 ```
 
 

@@ -218,7 +218,7 @@ class RobotAPI:
             print("Navigation completed")
             return True
         else:
-            print("Navigation no completed")
+            #print("Navigation no completed")
             return False
 
     def process_completed(self, robot_name: str):
