@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# RobotClientAPI.py
+#
+# @author Emima Jiva. (c) ai2-UPV Todos los derechos reservados.
+#
+# Proyecto "WASHCARROB"
+# Version: 1.0
+# Rev: 2023. cambios introducidos  
+
 import paho.mqtt.client as mqtt
 import json
 import math
