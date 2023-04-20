@@ -220,9 +220,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                 self.state = RobotState.IDLE
                             else:
                                 if self.path_index is not None:
-                                    self.node.get_logger().info(
+                                    """self.node.get_logger().info(
                                         f"Waiting for "
-                                        f"{(waypoint_wait_time - time_now).seconds}s")
+                                        f"{(waypoint_wait_time - time_now).seconds}s")"""
                                     self.next_arrival_estimator(
                                         self.path_index, timedelta(seconds=0.0))
 

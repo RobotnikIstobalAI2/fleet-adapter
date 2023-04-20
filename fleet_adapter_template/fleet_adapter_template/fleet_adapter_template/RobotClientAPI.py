@@ -201,6 +201,7 @@ class RobotAPI:
         self.current_goal = False
         cancel_all_goals = {"id":""}
         self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals))
+        print("Cancel")
         return True
 
     def navigation_remaining_duration(self, robot_name: str):
