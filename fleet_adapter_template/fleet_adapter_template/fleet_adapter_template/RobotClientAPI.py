@@ -93,7 +93,7 @@ class RobotAPI:
         #Dictionary robot-feedback
         self.robotfeedback = {}
         #Dictionary robot-status
-        self.robotresult= {}
+        self.robotstatus= {}
         #Current goal variable
         self.current_goal = False
         # Test connectivity
@@ -108,7 +108,7 @@ class RobotAPI:
         self.client.loop_start()
         self.client.subscribe("pose/#")
         self.client.subscribe("feedback/#")
-        self.client.subscribe("result/#")
+        self.client.subscribe("status/#")
 
     def connect_mqtt(self):
         def on_connect(client, userdate, flags, rc):
@@ -120,7 +120,7 @@ class RobotAPI:
         client.on_connect = on_connect
         client.message_callback_add('pose/#', self.on_message_pose)
         client.message_callback_add('feedback/#', self.on_message_feedback)
-        client.message_callback_add('result/#', self.on_message_result)
+        client.message_callback_add('status/#', self.on_message_status)
         client.connect('127.0.0.1', 1883)
         return client
 
@@ -136,12 +136,16 @@ class RobotAPI:
         robot = msg.topic.split("/")[1]
         self.robotfeedback[robot] = feedback
 
-    def on_message_result(self, client, userdata, msg):
+    def on_message_status(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
-        result=json.loads(decoded_message)['status']['status']
-        print(result)
+        status=json.loads(decoded_message)['status_list']
         robot = msg.topic.split("/")[1]
-        self.robotresult[robot] = result
+        if len(status[0]['status']) != 0:
+            self.robotstatus[robot] = status[0]['status']
+            print(status[0]['status'])
+        else:
+            self.robotstatus[robot] = 0
+        #print(status)
 
     def check_connection(self):
         ''' Return True if connection to the robot API server is successful'''
@@ -159,6 +163,7 @@ class RobotAPI:
             self.robotpose[robot_name]['orientation']['x'], self.robotpose[robot_name]['orientation']['y'],
             self.robotpose[robot_name]['orientation']['z'], self.robotpose[robot_name]['orientation']['w'])[2]
         if self.x != None and self.y != None and self.theta != None:
+            print("Position " + str([self.x,self.y,self.theta]))
             return [self.x,self.y,self.theta]
         else:
             return None
@@ -168,6 +173,7 @@ class RobotAPI:
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
             else False'''
+        print("Goal " + str(pose))
         self.x_goal = pose[0]
         self.y_goal = pose[1]
         orientation = quaternion_from_euler(0,0,pose[2])
@@ -188,9 +194,11 @@ class RobotAPI:
         self.client.publish("goal/"+robot_name ,json.dumps(data))
         if self.robotfeedback[robot_name] == 1:
             self.current_goal = True
+            #print("Goal Accepted")
             return True
         else:
             self.current_goal = False
+            #print("Goal NOT Accepted")
             return False
 
     def start_process(self, robot_name: str, process: str, map_name: str):
@@ -209,7 +217,7 @@ class RobotAPI:
         self.current_goal = False
         cancel_all_goals = {"id":""}
         self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals))
-        print("Cancel")
+        print("Stop")
         return True
 
     def navigation_remaining_duration(self, robot_name: str):
@@ -223,11 +231,10 @@ class RobotAPI:
     def navigation_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
-        if (self.robotresult[robot_name] == 3): 
+        if ((self.robotstatus[robot_name] == 3) and (self.current_goal==True)): 
             print("Navigation completed")
             return True
         else:
-            #print("Navigation no completed")
             return False
 
     def process_completed(self, robot_name: str):
