@@ -93,7 +93,7 @@ class RobotAPI:
         #Dictionary robot-feedback
         self.robotfeedback = {}
         #Dictionary robot-status
-        self.robotstatus= {}
+        self.robotresult= {}
         #Current goal variable
         self.current_goal = False
         # Test connectivity
@@ -108,7 +108,7 @@ class RobotAPI:
         self.client.loop_start()
         self.client.subscribe("pose/#")
         self.client.subscribe("feedback/#")
-        self.client.subscribe("status/#")
+        self.client.subscribe("result/#")
 
     def connect_mqtt(self):
         def on_connect(client, userdate, flags, rc):
@@ -120,7 +120,7 @@ class RobotAPI:
         client.on_connect = on_connect
         client.message_callback_add('pose/#', self.on_message_pose)
         client.message_callback_add('feedback/#', self.on_message_feedback)
-        client.message_callback_add('status/#', self.on_message_status)
+        client.message_callback_add('result/#', self.on_message_result)
         client.connect('127.0.0.1', 1883)
         return client
 
@@ -136,16 +136,12 @@ class RobotAPI:
         robot = msg.topic.split("/")[1]
         self.robotfeedback[robot] = feedback
 
-    def on_message_status(self, client, userdata, msg):
+    def on_message_result(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
-        status=json.loads(decoded_message)['status_list']
+        result=json.loads(decoded_message)['status']['status']
+        print(result)
         robot = msg.topic.split("/")[1]
-        if len(status[0]['status']) != 0:
-            self.robotstatus[robot] = status[0]['status']
-            print(status[0]['status'])
-        else:
-            self.robotstatus[robot] = 0
-        #print(status)
+        self.robotresult[robot] = result
 
     def check_connection(self):
         ''' Return True if connection to the robot API server is successful'''
@@ -231,7 +227,7 @@ class RobotAPI:
     def navigation_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
-        if ((self.robotstatus[robot_name] == 3) and (self.current_goal==True)): 
+        if (self.robotresult[robot_name] == 3):
             print("Navigation completed")
             return True
         else:
