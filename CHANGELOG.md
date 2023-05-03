@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Removed
+
+- GPU usage
+
 ## [0.1.0-rc01]  -  2023-04-26
 
 ### Changed 
