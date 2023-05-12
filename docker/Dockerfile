@@ -30,7 +30,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM rmf-core-humble-base:latest
+FROM rmf-core-base:humble-0.1.0
 
 LABEL authors="Emima Jiva <emji@ai2.upv.es>"
 LABEL maintainers="Emima Jiva <emji@ai2.upv.es>"
