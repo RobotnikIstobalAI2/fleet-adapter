@@ -49,15 +49,9 @@ ENV DEBIAN_FRONTEND noninteractive
 
 USER $root
 
-RUN apt-get update \
-	&& apt-get install -q -y \
-	 	python3-pip \
+RUN true \
 	&& pip install paho-mqtt \
-	&& apt-get install -q -y \
-	&& apt-get clean -q -y \
-	&& apt-get autoremove -q -y \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& echo '%ros ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+	&& true
 
 USER $user_name
 
