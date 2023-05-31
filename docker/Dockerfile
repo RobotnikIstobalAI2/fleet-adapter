@@ -73,18 +73,28 @@ COPY --chown=$user_name \
 	config/ \
 	$config_dir/
 
-#Copy graph folder 
+#Copy graph folder
 RUN mkdir -p $graph_dir
 WORKDIR $graph_dir
 COPY --chown=$user_name \
 	graph/ \
 	$graph_dir/
-	
-WORKDIR $ros2_dir
-RUN /bin/bash -c 'source /opt/ros/humble/setup.bash; sudo colcon build --packages-select fleet_adapter_template'
 
-#CMD bash -c "/ros_entrypoint.sh ros2 run fleet_adapter_template fleet_adapter -c /home/ros/config/config_rbkairos.yaml  -n /home/ros/graph/0.yaml"
-#CMD bash -c "while true; do sleep 600; done;"
+ENV ROS_BU_PKG "fleet_adapter_template"
+ENV ROS_BU_PRG "fleet_adapter"
+ENV FLEET_CONFIG_FILE "/home/ros/config/config_rbkairos.yaml"
+ENV GRAPH_CONFIG_FILE "/home/ros/graph/0.yaml"
+
+WORKDIR $ros2_dir
+RUN true \
+	&& /ros_entrypoint.sh \
+	colcon build \
+		--packages-select \
+		"${ROS_BU_PKG}"
+
+CMD ros2 run ${ROS_BU_PKG} ${ROS_BU_PRG} \
+ 	-c ${FLEET_CONFIG_FILE} \
+ 	-n ${GRAPH_CONFIG_FILE}
 
 
 
