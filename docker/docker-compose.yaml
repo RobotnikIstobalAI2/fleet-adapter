@@ -6,9 +6,6 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    stdin_open: true
-    tty: true
-    privileged: true
     network_mode: host
     ipc: host
     stop_signal: SIGINT
