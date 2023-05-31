@@ -2,7 +2,7 @@
 version: "3.7"
 services:
   fleet-adapter:
-    image: fleet-adapter:humble-0.1.0
+    image: fleet-adapter:humble-devel
     build:
       context: ..
       dockerfile: docker/Dockerfile
