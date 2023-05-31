@@ -12,3 +12,8 @@ services:
     command: >
       sh -c "/ros_entrypoint.sh &&
         ros2 run fleet_adapter_template fleet_adapter -c /home/ros/config/config_rbkairos.yaml -n /home/ros/graph/0.yaml"
+    environment:
+      ROS_BU_PKG: "fleet_adapter_template"
+      ROS_BU_PRG: "fleet_adapter"
+      FLEET_CONFIG_FILE: "/home/ros/config/config_rbkairos.yaml"
+      GRAPH_CONFIG_FILE: "/home/ros/graph/0.yaml"
