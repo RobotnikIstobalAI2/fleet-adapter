@@ -87,8 +87,9 @@ ENV GRAPH_CONFIG_FILE "/home/ros/graph/0.yaml"
 
 WORKDIR $ros2_dir
 RUN true \
-	&& /ros_entrypoint.sh \
-	colcon build \
+	&& rm -rf "install/${ROS_BU_PKG}" \
+	&& rm -rf "build/${ROS_BU_PKG}" \
+	&& colcon build \
 		--packages-select \
 		"${ROS_BU_PKG}"
 
