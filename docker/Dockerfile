@@ -30,7 +30,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM rmf-core-base:humble-devel
+FROM rmf-core-base:humble-devel-0.1.1
 
 LABEL authors="Emima Jiva <emji@ai2.upv.es>"
 LABEL maintainers="Emima Jiva <emji@ai2.upv.es>"
@@ -55,17 +55,6 @@ RUN true \
 
 USER $user_name
 
-#Delete rmf_demos because it has other fleet_adapter_template
-WORKDIR $ros2_src_dir/
-RUN rm -r rmf_demos
-
-#Copy fleet_adapter_template
-WORKDIR $ros2_src_dir/fleet_adapter_template
-RUN rm -r fleet_adapter_template/
-COPY --chown=$user_name \
-	fleet_adapter_template/ \
-	$ros2_src_dir/fleet_adapter_template
-
 #Copy config folder
 RUN mkdir -p $config_dir
 WORKDIR $config_dir
@@ -80,18 +69,23 @@ COPY --chown=$user_name \
 	graph/ \
 	$graph_dir/
 
-ENV ROS_BU_PKG "fleet_adapter_template"
+#Copy fleet_adapter_mqtt
+WORKDIR $ros2_src_dir
+COPY --chown=$user_name \
+	fleet_adapter_mqtt/fleet_adapter_mqtt \
+	$ros2_src_dir/fleet_adapter_mqtt
+
+ENV ROS_BU_PKG "fleet_adapter_mqtt"
 ENV ROS_BU_PRG "fleet_adapter"
 ENV FLEET_CONFIG_FILE "/home/ros/config/config_rbkairos.yaml"
 ENV GRAPH_CONFIG_FILE "/home/ros/graph/0.yaml"
 
+COPY docker/ros_entrypoint.sh /
+RUN sudo chmod +x /ros_entrypoint.sh
+
 WORKDIR $ros2_dir
-RUN true \
-	&& rm -rf "install/${ROS_BU_PKG}" \
-	&& rm -rf "build/${ROS_BU_PKG}" \
-	&& colcon build \
-		--packages-select \
-		"${ROS_BU_PKG}"
+RUN /bin/bash -c 'source /opt/ros/humble/setup.bash; colcon build'
+ENV ROS_SETUP_FILES "${ros2_dir}/install/setup.bash"
 
 CMD ros2 run ${ROS_BU_PKG} ${ROS_BU_PRG} \
  	-c ${FLEET_CONFIG_FILE} \
