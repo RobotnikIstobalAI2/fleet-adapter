@@ -199,7 +199,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     response = self.api.navigate(self.name,
                                                  [x, y, theta],
                                                  self.map_name)
-                    print("NAVIGATE: " + self.name + " " + str(round(x, 2)) + "  " + str(round(y, 2)) + " " + str(response)) 
                     if response:
                         self.remaining_waypoints = self.remaining_waypoints[1:]
                         self.state = RobotState.MOVING
@@ -217,7 +216,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         if self.target_waypoint is not None:
                             waypoint_wait_time = self.target_waypoint.time
                             if (waypoint_wait_time < time_now):
-                                print("Entrando en IDLE: " + self.name + " " + str(waypoint_wait_time) + " " + str(time_now))
                                 self.state = RobotState.IDLE
                             else:
                                 if self.path_index is not None:
@@ -231,9 +229,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     self.sleep_for(0.1)
                     # Check if we have reached the target
                     with self._lock:
-                        print("MOVING")
                         if (self.api.navigation_completed(self.name)):
-                            print("Navigation completed")
                             self.node.get_logger().info(
                                 f"Robot [{self.name}] has reached its target "
                                 f"waypoint")
@@ -246,7 +242,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             else:
                                 self.on_waypoint = None  # still on a lane
                         else:
-                            print("No navigation completed")
                             # Update the lane the robot is on
                             lane = self.get_current_lane()
                             if lane is not None:

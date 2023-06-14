@@ -30,7 +30,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM rmf-core-base:humble-devel-0.1.1
+FROM rmf-core-base:humble-0.1.1-rc01
 
 LABEL authors="Emima Jiva <emji@ai2.upv.es>"
 LABEL maintainers="Emima Jiva <emji@ai2.upv.es>"
@@ -79,9 +79,6 @@ ENV ROS_BU_PKG "fleet_adapter_mqtt"
 ENV ROS_BU_PRG "fleet_adapter"
 ENV FLEET_CONFIG_FILE "/home/ros/config/config_rbkairos.yaml"
 ENV GRAPH_CONFIG_FILE "/home/ros/graph/0.yaml"
-
-COPY docker/ros_entrypoint.sh /
-RUN sudo chmod +x /ros_entrypoint.sh
 
 WORKDIR $ros2_dir
 RUN /bin/bash -c 'source /opt/ros/humble/setup.bash; colcon build'

@@ -24,18 +24,19 @@ import paho.mqtt.client as mqtt
 import json
 import math
 import numpy as np
+import time
 
 def quaternion_from_euler(roll, pitch, yaw):
     """
     Convert an Euler angle to a quaternion.
-    
+
     Input
-        :param roll: The roll (rotation around x-axis) angle in radians.
-        :param pitch: The pitch (rotation around y-axis) angle in radians.
-        :param yaw: The yaw (rotation around z-axis) angle in radians.
-    
+    :param roll: The roll (rotation around x-axis) angle in radians.
+    :param pitch: The pitch (rotation around y-axis) angle in radians.
+    :param yaw: The yaw (rotation around z-axis) angle in radians.
+
     Output
-        :return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
+    :return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
     """
     qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
@@ -53,16 +54,16 @@ def euler_from_quaternion(x, y, z, w):
     t0 = +2.0 * (w * x + y * z)
     t1 = +1.0 - 2.0 * (x * x + y * y)
     roll_x = math.atan2(t0, t1)
-    
+
     t2 = +2.0 * (w * y - z * x)
     t2 = +1.0 if t2 > +1.0 else t2
     t2 = -1.0 if t2 < -1.0 else t2
     pitch_y = math.asin(t2)
-    
+
     t3 = +2.0 * (w * z + x * y)
     t4 = +1.0 - 2.0 * (y * y + z * z)
     yaw_z = math.atan2(t3, t4)
-    
+
     return roll_x, pitch_y, yaw_z # in radians
 
 '''
@@ -77,10 +78,14 @@ class RobotAPI:
     # The constructor below accepts parameters typically required to submit
     # http requests. Users should modify the constructor as per the
     # requirements of their robot's API
-    def __init__(self, prefix: str, user: str, password: str):
-        self.prefix = prefix
-        self.user = user
-        self.password = password
+    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str):
+        # self.broker = broker
+        # self.port = port
+        # self.keep_alive = keep_alive
+        # self.anonymous_acces = anonymous_acces
+        # self.user = user
+        # self.password = password
+        # self.pose_topic = pose_topic
         self.connected = False
         #Position information
         self.x = {}
@@ -91,22 +96,19 @@ class RobotAPI:
         self.theta_goal = {}
         #Dictionary robot-pose
         self.robotpose = {}
-        #Dictionary robot-feedback
-        self.robotfeedback = {}
-        # Test connectivity
-        connected = self.check_connection()
-        if connected:
-            print("Successfully able to query API server")
-            self.connected = True
-        else:
-            print("Unable to query API server")
+        #Dictionary battery level
+        self.battery = {}
+        #Dictionary result
+        self.resultgoal = {}
+        #Dictionary result
+        self.feedback = {}
+        #A dict with existing robots
+        self.robots = {}
         #MQTT Connection
-        self.client = self.connect_mqtt()
+        self.client = self.connect_mqtt(broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic)
         self.client.loop_start()
-        self.client.subscribe("pose/#")
-        self.client.subscribe("feedback/#")
 
-    def connect_mqtt(self):
+    def connect_mqtt(self, broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic):
         def on_connect(client, userdate, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker")
@@ -114,8 +116,15 @@ class RobotAPI:
                 print("Failed to connect")
         client = mqtt.Client('fleet-adapter')
         client.on_connect = on_connect
-        client.message_callback_add('pose/#', self.on_message_pose)
-        client.connect('127.0.0.1', 1883)
+        client.message_callback_add(pose_topic, self.on_message_pose)
+        client.message_callback_add(result_topic, self.on_message_result)
+        client.message_callback_add(feedback_topic, self.on_message_feedback)
+        if anonymous_access:
+            client.username_pw_set(user, password)
+        client.connect(broker, port, keep_alive)
+        client.subscribe(pose_topic, 2)
+        client.subscribe(result_topic, 2)
+        client.subscribe(feedback_topic, 2)
         return client
 
     def on_message_pose(self, client, userdata, msg):
@@ -123,19 +132,32 @@ class RobotAPI:
         pose=json.loads(decoded_message)['pose']['pose']
         robot = msg.topic.split("/")[1]
         self.robotpose[robot] = pose
+        self.robots[robot] = robot
+    
+    def on_message_result(self, client, userdata, msg):
+        decoded_message=str(msg.payload.decode("utf-8"))
+        result=json.loads(decoded_message)['status']['status']
+        robot = msg.topic.split("/")[1]
+        self.resultgoal[robot] = result
+
+    def on_message_feedback(self, client, userdata, msg):
+        decoded_message=str(msg.payload.decode("utf-8"))
+        feed=json.loads(decoded_message)['status']['status']
+        robot = msg.topic.split("/")[1]
+        self.feedback[robot] = feed
 
     def position(self, robot_name: str):
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
             None if any errors are encountered'''
-        self.x[robot_name] = self.robotpose[robot_name]['position']['x']
-        self.y[robot_name] = self.robotpose[robot_name]['position']['y']
-        self.theta[robot_name] = euler_from_quaternion(
+        if self.robots.get(robot_name) is not None:
+            self.x[robot_name] = round(self.robotpose[robot_name]['position']['x'],2)
+            self.y[robot_name] = round(self.robotpose[robot_name]['position']['y'],2)
+            self.theta[robot_name] = round(euler_from_quaternion(
             self.robotpose[robot_name]['orientation']['x'], self.robotpose[robot_name]['orientation']['y'],
-            self.robotpose[robot_name]['orientation']['z'], self.robotpose[robot_name]['orientation']['w'])[2]
-        if self.x[robot_name] != None and self.y[robot_name] != None and self.theta[robot_name] != None:
+            self.robotpose[robot_name]['orientation']['z'], self.robotpose[robot_name]['orientation']['w'])[2],2)
             return [self.x[robot_name],self.y[robot_name],self.theta[robot_name]]
         else:
-            print("No position")
+            print("No position for " + robot_name)
             return None
 
     def navigate(self, robot_name: str, pose, map_name: str):
@@ -143,13 +165,13 @@ class RobotAPI:
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
             else False'''
-        self.x_goal[robot_name] = pose[0]
-        self.y_goal[robot_name] = pose[1]
-        self.theta_goal[robot_name] = pose[2]
-        orientation = quaternion_from_euler(0,0,pose[2])
+        self.x_goal[robot_name] = round(pose[0],2)
+        self.y_goal[robot_name] = round(pose[1],2)
+        self.theta_goal[robot_name] = round(pose[2],2)
+        orientation = quaternion_from_euler(0,0,round(pose[2],2))
         data = {"goal":{"target_pose":{"header":{
                                             "frame_id":map_name},
-                                       "pose":{
+                                    "pose":{
                                             "position":{
                                                 "x":self.x_goal[robot_name],
                                                 "y":self.y_goal[robot_name],
@@ -161,46 +183,38 @@ class RobotAPI:
                                                 "z":orientation[2],
                                                 "w":orientation[3]
                                             }}}}}
-        self.client.publish("goal/"+robot_name ,json.dumps(data))
-        return True
+        self.client.publish("goal/"+robot_name ,json.dumps(data), 2)
+        if self.feedback.get(robot_name) is not None and self.feedback[robot_name] == 1:
+            self.feedback[robot_name] = 0
+            return True
+        else:
+            return False
 
     def stop(self, robot_name: str):
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
         cancel_all_goals = {"id":""}
-        self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals))
+        self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals), 2)
         return True
 
     def navigation_completed(self, robot_name: str):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
-        print(robot_name + " " + str(round(math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2),2)))
-        if ((math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2) < 0.5)):
-            print("Navigation completed! " + str(math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2)))
+        distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
+        print("Diference " + str(distance))
+        if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3) or (distance < 0.5):
+            print("Navigation completed!  ")
+            self.resultgoal[robot_name] = 0
             return True
-        return False
+        else:
+            print("Navigation not completed " + robot_name)
+            return False 
     
-
-
-
-    def check_connection(self):
-        ''' Return True if connection to the robot API server is successful'''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return True
-    
-    def start_process(self, robot_name: str, process: str, map_name: str):
-        ''' Request the robot to begin a process. This is specific to the robot
-            and the use case. For example, load/unload a cart for Deliverybot
-            or begin cleaning a zone for a cleaning robot.
-            Return True if the robot has accepted the request, else False'''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        print("Start process")
-        return True
-    
+    def battery_soc(self, robot_name: str):
+        ''' Return the state of charge of the robot as a value between 0.0
+            and 1.0. Else return None if any errors are encountered'''
+        return 0.8
+        
     def navigation_remaining_duration(self, robot_name: str):
         ''' Return the number of seconds remaining for the robot to reach its
             destination'''
@@ -208,18 +222,5 @@ class RobotAPI:
         # IMPLEMENT YOUR CODE HERE #
         # ------------------------ #
         #print("Navigation remaining duration")
+        print("navigation_remaining")
         return 0.0
-
-    def process_completed(self, robot_name: str):
-        ''' Return True if the robot has successfully completed its previous
-            process request. Else False.'''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        #print("Process completed")
-        return True
-
-    def battery_soc(self, robot_name: str):
-        ''' Return the state of charge of the robot as a value between 0.0
-            and 1.0. Else return None if any errors are encountered'''
-        return 0.8

@@ -4,9 +4,15 @@
 rmf_fleet:
   name: "robotnik_fleet"
   fleet_manager:
-    prefix: "http://127.0.0.1:8000"
+    broker: "localhost"
+    port: 1883
+    keep_alive: 60
+    anonymous_access: true
     user: "some_user"
     password: "some_password"
+    pose_topic: "pose/#"
+    feedback_topic: "feedback/#"
+    result_topic: "result/#"
   limits:
     linear: [3, 3] # velocity, acceleration
     angular: [3, 3] # velocity, acceleration
@@ -107,14 +113,6 @@ robots:
 # For computing transforms between Robot and RMF coordinate systems
 
 reference_coordinates:
-  # rmf: [[23,-19],
-  #       [22,-18],
-  #       [25,-15],
-  #       [102,-19]]
-  # robot: [[1,1],
-  #       [0,2],
-  #       [3,5],
-  #       [80,1]]
 
   rmf: [[59.64, -51.144],
         [59.69, -38.946],
