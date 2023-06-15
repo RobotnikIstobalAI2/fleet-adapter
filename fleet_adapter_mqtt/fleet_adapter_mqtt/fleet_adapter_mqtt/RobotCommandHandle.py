@@ -250,17 +250,17 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             else:
                                 # The robot may either be on the previous
                                 # waypoint or the target one
-                                print("MIRAMOS WAYPOINT")
+                                print("Estoy en un waypoint")
                                 if self.target_waypoint.graph_index is not \
                                     None and self.dist(self.position, target_pose) < 0.5:
                                     self.on_waypoint = self.target_waypoint.graph_index
-                                    print("WAYPOINT1")
+                                    print("Estoy en la position de target pose")
                                 elif self.last_known_waypoint_index is not \
                                     None and self.dist(
                                     self.position, self.graph.get_waypoint(
                                       self.last_known_waypoint_index).location) < 0.5:
                                     self.on_waypoint = self.last_known_waypoint_index
-                                    print("WAYPOINT2")
+                                    print("Estoy en la position del ultimo waypoint")
                                 else:
                                     self.on_lane = None  # update_off_grid()
                                     self.on_waypoint = None

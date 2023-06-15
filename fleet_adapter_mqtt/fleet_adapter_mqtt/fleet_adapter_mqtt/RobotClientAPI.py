@@ -119,7 +119,7 @@ class RobotAPI:
         client.message_callback_add(pose_topic, self.on_message_pose)
         client.message_callback_add(result_topic, self.on_message_result)
         client.message_callback_add(feedback_topic, self.on_message_feedback)
-        if anonymous_access:
+        if not anonymous_access:
             client.username_pw_set(user, password)
         client.connect(broker, port, keep_alive)
         client.subscribe(pose_topic, 2)
