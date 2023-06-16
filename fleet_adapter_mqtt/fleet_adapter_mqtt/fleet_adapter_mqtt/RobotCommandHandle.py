@@ -210,7 +210,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         self.sleep_for(0.1)
 
                 elif self.state == RobotState.WAITING:
-                    self.sleep_for(0.1)
+                    self.sleep_for(0.25)
                     time_now = self.adapter.now()
                     with self._lock:
                         if self.target_waypoint is not None:
@@ -230,9 +230,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     # Check if we have reached the target
                     with self._lock:
                         if (self.api.navigation_completed(self.name)):
-                            self.node.get_logger().info(
-                                f"Robot [{self.name}] has reached its target "
-                                f"waypoint")
+                            # self.node.get_logger().info(
+                            #     f"Robot [{self.name}] has reached its target "
+                            #     f"waypoint")
                             self.state = RobotState.WAITING
                             if (self.target_waypoint.graph_index is not None):
                                 self.on_waypoint = \
@@ -250,17 +250,14 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             else:
                                 # The robot may either be on the previous
                                 # waypoint or the target one
-                                print("Estoy en un waypoint")
                                 if self.target_waypoint.graph_index is not \
                                     None and self.dist(self.position, target_pose) < 0.5:
                                     self.on_waypoint = self.target_waypoint.graph_index
-                                    print("Estoy en la position de target pose")
                                 elif self.last_known_waypoint_index is not \
                                     None and self.dist(
                                     self.position, self.graph.get_waypoint(
                                       self.last_known_waypoint_index).location) < 0.5:
                                     self.on_waypoint = self.last_known_waypoint_index
-                                    print("Estoy en la position del ultimo waypoint")
                                 else:
                                     self.on_lane = None  # update_off_grid()
                                     self.on_waypoint = None
@@ -275,9 +272,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             self.next_arrival_estimator(
                                 self.path_index, timedelta(seconds=duration))
             self.path_finished_callback()
-            self.node.get_logger().info(
-                f"Robot {self.name} has successfully navigated along "
-                f"requested path.")
+            # self.node.get_logger().info(
+            #     f"Robot {self.name} has successfully navigated along "
+            #     f"requested path.")
 
         self._follow_path_thread = threading.Thread(
             target=_follow_path)

@@ -78,15 +78,7 @@ class RobotAPI:
     # The constructor below accepts parameters typically required to submit
     # http requests. Users should modify the constructor as per the
     # requirements of their robot's API
-    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str):
-        # self.broker = broker
-        # self.port = port
-        # self.keep_alive = keep_alive
-        # self.anonymous_acces = anonymous_acces
-        # self.user = user
-        # self.password = password
-        # self.pose_topic = pose_topic
-        self.connected = False
+    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str):
         #Position information
         self.x = {}
         self.y = {}
@@ -105,10 +97,10 @@ class RobotAPI:
         #A dict with existing robots
         self.robots = {}
         #MQTT Connection
-        self.client = self.connect_mqtt(broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic)
+        self.client = self.connect_mqtt(broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic, battery_topic)
         self.client.loop_start()
 
-    def connect_mqtt(self, broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic):
+    def connect_mqtt(self, broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic, battery_topic):
         def on_connect(client, userdate, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker")
@@ -119,12 +111,14 @@ class RobotAPI:
         client.message_callback_add(pose_topic, self.on_message_pose)
         client.message_callback_add(result_topic, self.on_message_result)
         client.message_callback_add(feedback_topic, self.on_message_feedback)
+        client.message_callback_add(battery_topic, self.on_message_battery)
         if not anonymous_access:
             client.username_pw_set(user, password)
         client.connect(broker, port, keep_alive)
         client.subscribe(pose_topic, 2)
         client.subscribe(result_topic, 2)
         client.subscribe(feedback_topic, 2)
+        client.subscribe(battery_topic, 2)
         return client
 
     def on_message_pose(self, client, userdata, msg):
@@ -145,6 +139,12 @@ class RobotAPI:
         feed=json.loads(decoded_message)['status']['status']
         robot = msg.topic.split("/")[1]
         self.feedback[robot] = feed
+
+    def on_message_battery(self, client, userdata, msg):
+        decoded_message=str(msg.payload.decode("utf-8"))
+        bat=json.loads(decoded_message)['level']
+        robot = msg.topic.split("/")[1]
+        self.battery[robot] = bat
 
     def position(self, robot_name: str):
         ''' Return [x, y, theta] expressed in the robot's coordinate frame or
@@ -201,20 +201,21 @@ class RobotAPI:
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
-        print("Diference " + robot_name + " " + str(distance))
-        #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3) or (distance < 0.5):
-        if (distance < 0.5):
-            print("Navigation completed!  ")
+        if (distance < 0.2):
+            print("Navigation completed!  ", flush=True)
             self.resultgoal[robot_name] = 0
             return True
         else:
-            print("Navigation not completed " + robot_name)
+            #print("Navigation not completed " + robot_name, flush=True)
             return False 
     
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
-        return 0.8
+        if self.battery[robot_name] is not None:
+            return self.battery[robot_name]/100
+        else:
+            return 0.8
         
     def navigation_remaining_duration(self, robot_name: str):
         ''' Return the number of seconds remaining for the robot to reach its
@@ -222,6 +223,4 @@ class RobotAPI:
         # ------------------------ #
         # IMPLEMENT YOUR CODE HERE #
         # ------------------------ #
-        #print("Navigation remaining duration")
-        print("navigation_remaining")
         return 0.0

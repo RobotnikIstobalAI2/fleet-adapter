@@ -172,7 +172,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['fleet_manager']['password'],
         fleet_config['fleet_manager']['pose_topic'],
         fleet_config['fleet_manager']['feedback_topic'],
-        fleet_config['fleet_manager']['result_topic'])
+        fleet_config['fleet_manager']['result_topic'],
+        fleet_config['fleet_manager']['battery_topic'])
 
     # Initialize robots for this fleet
 
