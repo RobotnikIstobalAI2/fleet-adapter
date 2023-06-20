@@ -211,7 +211,7 @@ class RobotAPI:
             print("Navigation completed!  ", flush=True)
             return True
         else:
-            #print("Navigation not completed " + robot_name, flush=True)
+            #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
             return False 
     
     def battery_soc(self, robot_name: str):
