@@ -78,7 +78,9 @@ class RobotAPI:
     # The constructor below accepts parameters typically required to submit
     # http requests. Users should modify the constructor as per the
     # requirements of their robot's API
-    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, goal_dist: int):
+    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
+                pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
+                goal_dist: int):
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -99,10 +101,12 @@ class RobotAPI:
         #A dict with existing robots
         self.robots = {}
         #MQTT Connection
-        self.client = self.connect_mqtt(broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic, battery_topic)
+        self.client = self.connect_mqtt(broker, port, keep_alive, anonymous_access, user, password, \
+                                        pose_topic, feedback_topic, result_topic, battery_topic)
         self.client.loop_start()
 
-    def connect_mqtt(self, broker, port, keep_alive, anonymous_access, user, password, pose_topic, feedback_topic, result_topic, battery_topic):
+    def connect_mqtt(self, broker, port, keep_alive, anonymous_access, user, password, \
+                     pose_topic, feedback_topic, result_topic, battery_topic):
         def on_connect(client, userdate, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker")
@@ -217,11 +221,3 @@ class RobotAPI:
             return self.battery[robot_name]/100
         else:
             return 0.8
-        
-    def navigation_remaining_duration(self, robot_name: str):
-        ''' Return the number of seconds remaining for the robot to reach its
-            destination'''
-        # ------------------------ #
-        # IMPLEMENT YOUR CODE HERE #
-        # ------------------------ #
-        return 0.0

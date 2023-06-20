@@ -267,7 +267,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         # remaining travel duration, replace the API call
                         # below with an estimation
                         # ------------------------ #
-                        duration = self.api.navigation_remaining_duration(self.name)
+                        duration = 0.0
                         if self.path_index is not None:
                             self.next_arrival_estimator(
                                 self.path_index, timedelta(seconds=duration))
