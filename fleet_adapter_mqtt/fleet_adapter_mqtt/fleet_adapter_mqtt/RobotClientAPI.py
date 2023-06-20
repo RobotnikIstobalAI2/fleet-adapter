@@ -78,7 +78,9 @@ class RobotAPI:
     # The constructor below accepts parameters typically required to submit
     # http requests. Users should modify the constructor as per the
     # requirements of their robot's API
-    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str):
+    def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, goal_dist: int):
+        #Distance parameter
+        self.goal_dist = goal_dist
         #Position information
         self.x = {}
         self.y = {}
@@ -201,9 +203,8 @@ class RobotAPI:
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
-        if (distance < 0.2):
+        if (distance < self.goal_dist):
             print("Navigation completed!  ", flush=True)
-            self.resultgoal[robot_name] = 0
             return True
         else:
             #print("Navigation not completed " + robot_name, flush=True)
