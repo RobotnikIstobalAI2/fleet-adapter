@@ -208,7 +208,7 @@ class RobotAPI:
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
         if (distance < self.goal_dist):
-            print("Navigation completed!  ", flush=True)
+            print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
