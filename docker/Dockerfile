@@ -30,64 +30,69 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM rmf-core-base:humble-0.1.1-rc01
+FROM rmf-core-base:humble-0.1.1-rc02
 
 LABEL authors="Emima Jiva <emji@ai2.upv.es>"
 LABEL maintainers="Emima Jiva <emji@ai2.upv.es>"
 
-# Non Root user
-ARG user_name=ros
-ARG user_uid=1000
-ARG user_home=/home/$user_name
-ARG user_shell=/bin/bash
-ARG ros2_dir=$user_home/ros2_ws
-ARG ros2_src_dir=$ros2_dir/src
-ARG config_dir=$user_home/config
-ARG graph_dir=$user_home/graph
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT ["/ros_entrypoint.sh"]
 
-ENV DEBIAN_FRONTEND noninteractive
+# Set non root user
+ARG config_dir=$USER_HOME/config
+ARG graph_dir=$USER_HOME/graph
 
-USER $root
+#Set enviorment variables 
+ENV CONFIG_DIR 	$config_dir
+ENV GRAPH_DIR   $graph_dir
 
-RUN true \
-	&& pip install paho-mqtt \
-	&& true
+USER root
 
-USER $user_name
+RUN --mount=type=bind,source=./docker/requirements/fleet-adapter.txt,target=/tmp/requirements.txt true \
+  && apt-get update \
+  && apt-get install -q -y \
+  --no-install-recommends \
+    $(eval "echo $(cat /tmp/requirements.txt | xargs)") \
+  && apt-get clean -q -y \
+  && apt-get autoremove -q -y \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN --mount=type=bind,source=./docker/requirements/python.txt,target=/tmp/requirements.txt true \
+	&& pip install -r /tmp/requirements.txt
 
 #Copy config folder
-RUN mkdir -p $config_dir
-WORKDIR $config_dir
+RUN mkdir -p $CONFIG_DIR
+WORKDIR $CONFIG_DIR
 COPY --chown=$user_name \
 	config/ \
-	$config_dir/
+	$CONFIG_DIR/
 
 #Copy graph folder
-RUN mkdir -p $graph_dir
-WORKDIR $graph_dir
+RUN mkdir -p $GRAPH_DIR
+WORKDIR $GRAPH_DIR
 COPY --chown=$user_name \
 	graph/ \
-	$graph_dir/
+	$GRAPH_DIR/
 
 #Copy fleet_adapter_mqtt
-WORKDIR $ros2_src_dir
+WORKDIR $ROBOT_WS_SRC
 COPY --chown=$user_name \
 	fleet_adapter_mqtt/fleet_adapter_mqtt \
-	$ros2_src_dir/fleet_adapter_mqtt
+	$ROBOT_WS_SRC/fleet_adapter_mqtt
 
 ENV ROS_BU_PKG "fleet_adapter_mqtt"
 ENV ROS_BU_PRG "fleet_adapter"
-ENV FLEET_CONFIG_FILE "/home/ros/config/config_rbkairos.yaml"
-ENV GRAPH_CONFIG_FILE "/home/ros/graph/0.yaml"
+ENV FLEET_CONFIG_FILE "${CONFIG_DIR}/config_rbkairos.yaml"
+ENV GRAPH_CONFIG_FILE "${GRAPH_DIR}/0.yaml"
 
-WORKDIR $ros2_dir
+USER $USER_NAME
+WORKDIR $ROBOT_WS
 RUN /bin/bash -c 'source /opt/ros/humble/setup.bash; colcon build'
-ENV ROS_SETUP_FILES "${ros2_dir}/install/setup.bash"
+ENV ROS_SETUP_FILES "${ROBOT_WS}/install/setup.bash"
 
 CMD ros2 run ${ROS_BU_PKG} ${ROS_BU_PRG} \
  	-c ${FLEET_CONFIG_FILE} \
  	-n ${GRAPH_CONFIG_FILE}
-
 
 
 
