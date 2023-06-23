@@ -37,6 +37,7 @@ from functools import partial
 from .RobotCommandHandle import RobotCommandHandle
 from .RobotClientAPI import RobotAPI
 from .RobotDelivery import Dispenser
+from .RobotDelivery import Ingestor
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -328,10 +329,13 @@ def main(argv=sys.argv):
 
     #Init Dispenser
     dispenser = Dispenser("dispenser1")
+    #Init Ingestor
+    ingestor = Ingestor("ingestor1")
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)
     rclpy_executor.add_node(dispenser)
+    rclpy_executor.add_node(ingestor)
 
     # Start the fleet adapter
     rclpy_executor.spin()
