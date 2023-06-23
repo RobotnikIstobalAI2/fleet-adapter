@@ -21,7 +21,7 @@ import threading
 
 import rclpy
 import rclpy.node
-from rclpy.parameter import Parameter
+from   rclpy.parameter import Parameter
 
 import rmf_adapter as adpt
 import rmf_adapter.vehicletraits as traits
@@ -36,6 +36,7 @@ from functools import partial
 
 from .RobotCommandHandle import RobotCommandHandle
 from .RobotClientAPI import RobotAPI
+from .RobotDelivery import Dispenser
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -325,9 +326,12 @@ def main(argv=sys.argv):
         args.use_sim_time,
         server_uri)
 
+    #Init Dispenser
+    dispenser = Dispenser("dispenser1")
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)
+    rclpy_executor.add_node(dispenser)
 
     # Start the fleet adapter
     rclpy_executor.spin()

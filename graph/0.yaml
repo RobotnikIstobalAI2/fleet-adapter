@@ -257,13 +257,13 @@ levels:
       - {name: ''}
     - - 55.04616754148822
       - -41.05261126416046
-      - {name: ''}
+      - {name: dispenser3, pickup_dispenser: dispenser3}
     - - 55.023819767269785
       - -44.8998280911335
       - {name: point7}
     - - 55.16920528724116
       - -47.762842942124216
-      - {name: ''}
+      - {dropoff_ingestor: ingestor3, name: ingestor3}
     - - 53.49167236526054
       - -47.863482918638105
       - {name: point6}
@@ -272,7 +272,7 @@ levels:
       - {name: ''}
     - - 49.80103994287841
       - -47.82993625980014
-      - {name: ''}
+      - {dropoff_ingestor: ingestor2, name: ingestor2}
     - - 48.257693656249636
       - -47.72929628328625
       - {name: ''}
@@ -281,7 +281,7 @@ levels:
       - {name: point2}
     - - 44.06381135627745
       - -47.71809739866673
-      - {name: ''}
+      - {dropoff_ingestor: ingestor1, name: ingestor1}
     - - 44.23154465046726
       - -45.43662462756152
       - {name: point1}
@@ -290,7 +290,7 @@ levels:
       - {name: point3}
     - - 43.95197249514403
       - -41.0190646053225
-      - {name: ''}
+      - {name: dispenser1, pickup_dispenser: dispenser1}
     - - 46.51301742157246
       - -41.063810148779986
       - {name: point4}
@@ -299,7 +299,7 @@ levels:
       - {name: ''}
     - - 50.069463208602734
       - -41.13090346645592
-      - {name: ''}
+      - {name: dispenser2, pickup_dispenser: dispenser2}
     - - 51.64635615406947
       - -41.05261126416046
       - {name: ''}
