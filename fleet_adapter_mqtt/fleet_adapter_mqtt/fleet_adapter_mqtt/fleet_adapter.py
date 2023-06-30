@@ -18,6 +18,7 @@ import yaml
 import nudged
 import time
 import threading
+import datetime
 
 import rclpy
 import rclpy.node
@@ -97,8 +98,17 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     if not fleet_config['publish_fleet_state']:
         fleet_handle.fleet_state_publish_period(None)
+    else:
+        fleet_state_update_frequency = fleet_config['publish_fleet_state']
+        fleet_handle.fleet_state_publish_period(
+        datetime.timedelta(seconds=1.0/fleet_state_update_frequency))
+
+    task_capabilities_config = fleet_config['task_capabilities']
+
     # Account for battery drain
     drain_battery = fleet_config['account_for_battery_drain']
+    lane_merge_distance = fleet_config['lane_merge_distance']
+    waypoint_merge_distance = fleet_config['waypoint_merge_distance']
     recharge_threshold = fleet_config['recharge_threshold']
     recharge_soc = fleet_config['recharge_soc']
     finishing_request = fleet_config['task_capabilities']['finishing_request']
@@ -138,6 +148,19 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     fleet_handle.accept_task_requests(
         partial(_task_request_check, task_capabilities))
+    
+    def _consider(description: dict):
+        confirm = adpt.fleet_update_handle.Confirmation()
+        confirm.accept()
+        return confirm
+
+    # Configure this fleet to perform action category
+    if 'action_categories' in task_capabilities_config:
+        for cat in task_capabilities_config['action_categories']:
+            node.get_logger().info(
+                f"Fleet [{fleet_name}] is configured"
+                f" to perform action of category [{cat}]")
+            fleet_handle.add_performable_action(cat, _consider)
 
     # Transforms
     rmf_coordinates = config_yaml['reference_coordinates']['rmf']
@@ -164,6 +187,36 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         """Insert a RobotUpdateHandle."""
         cmd_handle.update_handle = update_handle
 
+        def _action_executor(category: str,
+                             description: dict,
+                             execution:
+                             adpt.robot_update_handle.ActionExecution):
+            with cmd_handle._lock:
+                if len(description) > 0 and\
+                        description in cmd_handle.graph.keys:
+                    cmd_handle.action_waypoint_index = \
+                        cmd_handle.find_waypoint(description).index
+                else:
+                    cmd_handle.action_waypoint_index = \
+                        cmd_handle.last_known_waypoint_index
+                cmd_handle.on_waypoint = None
+                cmd_handle.on_lane = None
+                cmd_handle.action_execution = execution
+        # Set the action_executioner for the robot
+        cmd_handle.update_handle.set_action_executor(_action_executor)
+        if ("max_delay" in cmd_handle.config.keys()):
+            max_delay = cmd_handle.config["max_delay"]
+            cmd_handle.node.get_logger().info(
+                f"Setting max delay to {max_delay}s")
+            cmd_handle.update_handle.set_maximum_delay(max_delay)
+        if (cmd_handle.charger_waypoint_index <
+                cmd_handle.graph.num_waypoints):
+            cmd_handle.update_handle.set_charger_waypoint(
+                cmd_handle.charger_waypoint_index)
+        else:
+            cmd_handle.node.get_logger().warn(
+                "Invalid waypoint supplied for charger. "
+                "Using default nearest charger in the map")
     # Initialize robot API for this fleet
     api = RobotAPI(
         fleet_config['fleet_manager']['broker'],
@@ -245,7 +298,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                         update_frequency=rmf_config.get(
                             'robot_state_update_frequency', 1),
                         adapter=adapter,
-                        api=api)
+                        api=api,
+                        lane_merge_distance=lane_merge_distance,)
 
                     if robot.initialized:
                         robots[robot_name] = robot

@@ -166,7 +166,13 @@ class RobotAPI:
             print("No position for " + robot_name)
             return None
 
-    def navigate(self, robot_name: str, pose, map_name: str):
+ 
+    def navigate(self,
+                 robot_name: str,
+                 cmd_id: int,
+                 pose,
+                 map_name: str,
+                 speed_limit=0.0):
         ''' Request the robot to navigate to pose:[x,y,theta] where x, y and
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
@@ -196,23 +202,40 @@ class RobotAPI:
         else:
             return False
 
-    def stop(self, robot_name: str):
+    def start_process(self,
+                      robot_name: str,
+                      cmd_id: int,
+                      process: str,
+                      map_name: str):
+        return True
+    
+    def navigation_remaining_duration(self, robot_name: str, cmd_id: int):
+        return 0.0
+    
+    def stop(self, robot_name: str, cmd_id: int):
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
         cancel_all_goals = {"id":""}
         self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals), 2)
         return True
 
-    def navigation_completed(self, robot_name: str):
+    def navigation_completed(self, robot_name: str, cmd_id: int):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
+        #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
         if (distance < self.goal_dist):
+            #self.resultgoal[robot_name] = 0
             print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
             return False 
+        
+    def process_completed(self, robot_name: str, cmd_id: int):
+        ''' Return True if the robot has successfully completed its previous
+            process request. Else False.'''
+        return self.navigation_completed(robot_name, cmd_id)
     
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
@@ -221,3 +244,10 @@ class RobotAPI:
             return self.battery[robot_name]/100
         else:
             return 0.8
+    
+    def requires_replan(self, robot_name: str):
+        '''Return whether the robot needs RMF to replan'''
+        return False
+    
+    def toggle_action(self, robot_name: str, toggle: bool):
+        return True
