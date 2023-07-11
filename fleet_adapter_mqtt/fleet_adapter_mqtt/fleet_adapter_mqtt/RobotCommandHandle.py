@@ -85,6 +85,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.transforms = transforms
         self.map_name = map_name
         self.lane_merge_distance = lane_merge_distance
+        self.perform_filtering = True
 
         # Get the index of the charger waypoint
         waypoint = self.graph.find_waypoint(charger_waypoint)
@@ -258,17 +259,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         next_arrival_estimator,
         path_finished_callback):
 
-        # self.stop()
-        # self._quit_path_event.clear()
-
-        # self.node.get_logger().info("Received new path to follow...")
-
-        # self.remaining_waypoints = self.get_remaining_waypoints(waypoints)
-        # assert next_arrival_estimator is not None
-        # assert path_finished_callback is not None
-        # self.next_arrival_estimator = next_arrival_estimator
-        # self.path_finished_callback = path_finished_callback
-
         if self.debug:
             plan_id = self.update_handle.unstable_current_plan_id()
             print(f'follow_new_path for {self.name} with PlanId {plan_id}')
@@ -280,7 +270,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
             self.node.get_logger().info(f"Received new path for {self.name}")
 
-            self.remaining_waypoints = self.filter_waypoints(waypoints)
+            wait, entries = self.filter_waypoints(waypoints)
+
+            self.remaining_waypoints = copy.copy(entries)           
+                 
             assert next_arrival_estimator is not None
             assert path_finished_callback is not None
 
@@ -312,14 +305,11 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         [x, y] = self.transforms["rmf_to_robot"].transform(target_pose[:2])
                         theta = target_pose[2] + \
                         self.transforms['orientation_offset']
-                        speed_limit = \
-                            self.get_speed_limit(self.target_waypoint)
                         response = self.api.navigate(
                             self.name,
                             self.next_cmd_id(),
                             [x, y, theta],
-                            self.map_name,
-                            speed_limit
+                            self.map_name
                         )
 
                         if response:
@@ -335,10 +325,11 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             self._quit_path_event.wait(0.1)
 
                     elif self.state == RobotState.MOVING:
+                        time.sleep(0.5)
                         if self.api.requires_replan(self.name):
                             self.replan()
 
-                        if self._quit_path_event.wait(0.25):
+                        if self._quit_path_event.wait(0.1):
                             return
 
                         # Check if we have reached the target
@@ -557,9 +548,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     self.position, self.dock_waypoint_index)
             # if robot is performing an action
             elif (self.action_execution is not None):
+                print("Aqui podemos hacer algo", flush=True)
                 if not self.started_action:
                     self.started_action = True
-                    self.api.toggle_action(self.name, self.started_action)
                 self.update_handle.update_off_grid_position(
                     self.position, self.action_waypoint_index)
             # if robot is merging into a waypoint
@@ -610,72 +601,78 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         assert(len(B) > 1)
         return math.sqrt((A[0] - B[0])**2 + (A[1] - B[1])**2)
 
-    def get_speed_limit(self, target_waypoint):
-        approach_lane_limit = np.inf
-        approach_lanes = target_waypoint.approach_lanes
-        for lane_index in approach_lanes:
-            lane = self.graph.get_lane(lane_index)
-            lane_limit = lane.properties.speed_limit
-            if lane_limit is not None:
-                if lane_limit < approach_lane_limit:
-                    approach_lane_limit = lane_limit
-        return approach_lane_limit if approach_lane_limit != np.inf else 0.0
-
-    def filter_waypoints(self, wps: list):
+    def filter_waypoints(self, wps:list, threshold = 1.0):
         ''' Return filtered PlanWaypoints'''
 
         assert(len(wps) > 0)
-        p = np.array([self.position[0], self.position[1]])
-
+        first = None
+        second = []
+        threshold = 1.0
+        last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
             waypoints.append(PlanWaypoint(i, wps[i]))
 
-        # If the robot is already in the middle of two waypoints, then we can
-        # truncate all the waypoints that come before it.
-        begin_at_index = 0
-        for i in reversed(range(len(waypoints)-1)):
-            i0 = i
-            i1 = i+1
-            p0 = waypoints[i0].position
-            p0 = np.array([p0[0], p0[1]])
-            p1 = waypoints[i1].position
-            p1 = np.array([p1[0], p1[1]])
-            dp_lane = p1 - p0
-            lane_length = np.linalg.norm(dp_lane)
-            if lane_length < 1e-3:
-                continue
-            n_lane = dp_lane/lane_length
-            p_l = p - p0
-            p_l_proj = np.dot(p_l, n_lane)
-            if lane_length < p_l_proj:
-                # Check if the robot's position is close enough to the lane
-                # endpoint to merge it
-                if np.linalg.norm(p - p1) <= self.lane_merge_distance:
-                    begin_at_index = i1
+        # We assume the robot will backtack if the first waypoint in the plan
+        # is behind the current position of the robot
+        first_position = waypoints[0].position
+        if len(waypoints) > 2 and self.dist(first_position, last_pose) > threshold:
+            changed = False
+            index = 0
+            while (not changed):
+                if self.dist(waypoints[index].position, first_position) > 0.1:
+                    changed = True
                     break
-                # Otherwise, continue to the next lane because the robot is not
-                # between the lane endpoints
-                continue
-            if p_l_proj < 0.0:
-                # Check if the robot's position is close enough to the lane
-                # start point to merge it
-                if np.linalg.norm(p - p0) <= self.lane_merge_distance:
-                    begin_at_index = i0
-                    break
-                # Otherwise, continue to the next lane because the robot is not
-                # between the lane endpoints
-                continue
+                waypoints[index].position = last_pose
+                index = index + 1
 
-            lane_dist = np.linalg.norm(p_l - p_l_proj*n_lane)
-            if lane_dist <= self.lane_merge_distance:
-                begin_at_index = i1
+        if (self.perform_filtering is False):
+            return (first, waypoints)
+
+        changed = False
+        # Find the first waypoint
+        index = 0
+        while (not changed and index < len(waypoints)):
+            if (self.dist(last_pose,waypoints[index].position) < threshold):
+                first = waypoints[index]
+                last_pose = waypoints[index].position
+            else:
                 break
+            index = index + 1
 
-        if begin_at_index > 0:
-            del waypoints[:begin_at_index]
+        while (index < len(waypoints)):
+            parent_index = copy.copy(index)
+            wp = waypoints[index]
+            if (self.dist(wp.position, last_pose) >= threshold):
+                changed = False
+                while (not changed):
+                    next_index = index + 1
+                    if (next_index < len(waypoints)):
+                        if (self.dist(waypoints[next_index].position, waypoints[index].position) < threshold):
+                            if (next_index == len(waypoints) - 1):
+                                # append last waypoint
+                                changed = True
+                                wp = waypoints[next_index]
+                                wp.approach_lanes = waypoints[parent_index].approach_lanes
+                                second.append(wp)
+                        else:
+                            # append if next waypoint changes
+                            changed = True
+                            wp = waypoints[index]
+                            wp.approach_lanes = waypoints[parent_index].approach_lanes
+                            second.append(wp)
+                    else:
+                        # we add the current index to second
+                        changed = True
+                        wp = waypoints[index]
+                        wp.approach_lanes = waypoints[parent_index].approach_lanes
+                        second.append(wp)
+                    last_pose = waypoints[index].position
+                    index = next_index
+            else:
+                index = index + 1
 
-        return waypoints
+        return (first, second)
 
     def complete_robot_action(self):
         with self._lock:
@@ -684,52 +681,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             self.action_execution.finished()
             self.action_execution = None
             self.started_action = False
-            self.api.toggle_action(self.name, self.started_action)
             self.node.get_logger().info(f"Robot {self.name} has completed the"
                                         f" action it was performing")
-
-    def newly_closed_lanes(self, closed_lanes):
-        need_to_replan = False
-        current_lane = self.get_current_lane()
-
-        if self.target_waypoint is not None and \
-                self.target_waypoint.approach_lanes is not None:
-            for lane_idx in self.target_waypoint.approach_lanes:
-                if lane_idx in closed_lanes:
-                    need_to_replan = True
-                    # The robot is currently on a lane that has been closed.
-                    # We take this to mean that the robot needs to reverse.
-                    if lane_idx == current_lane:
-                        lane = self.graph.get_lane(current_lane)
-
-                        return_waypoint = lane.entry.waypoint_index
-                        reverse_lane = \
-                            self.graph.lane_from(lane.entry.waypoint_index,
-                                                 lane.exit.waypoint_index)
-
-                        with self._lock:
-                            if reverse_lane:
-                                # Update current lane to reverse back to
-                                # start of the lane
-                                self.on_lane = reverse_lane.index
-                            else:
-                                # Update current position and waypoint index
-                                # to return to
-                                self.target_waypoint = return_waypoint
-
-        if not need_to_replan and self.target_waypoint is not None:
-            # Check if the remainder of the current plan has been invalidated
-            # by the lane closure
-            for wp in self.remaining_waypoints:
-                for lane in wp.approach_lanes:
-                    if lane in closed_lanes:
-                        need_to_replan = True
-                        break
-                if need_to_replan:
-                    break
-
-        if need_to_replan:
-            self.update_handle.replan()
 
     def dock_summary_cb(self, msg):
         for fleet in msg.docks:

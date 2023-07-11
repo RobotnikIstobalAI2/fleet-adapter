@@ -171,8 +171,7 @@ class RobotAPI:
                  robot_name: str,
                  cmd_id: int,
                  pose,
-                 map_name: str,
-                 speed_limit=0.0):
+                 map_name: str):
         ''' Request the robot to navigate to pose:[x,y,theta] where x, y and
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
@@ -223,9 +222,9 @@ class RobotAPI:
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
-        #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
-        if (distance < self.goal_dist):
-            #self.resultgoal[robot_name] = 0
+        if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
+        #if (distance < self.goal_dist):
+            self.resultgoal[robot_name] = 0
             print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
@@ -248,6 +247,4 @@ class RobotAPI:
     def requires_replan(self, robot_name: str):
         '''Return whether the robot needs RMF to replan'''
         return False
-    
-    def toggle_action(self, robot_name: str, toggle: bool):
-        return True
+        
