@@ -611,6 +611,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
+            print("Waypoints " + str(wps[i].position))
             waypoints.append(PlanWaypoint(i, wps[i]))
 
         # We assume the robot will backtack if the first waypoint in the plan
@@ -635,6 +636,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         while (not changed and index < len(waypoints)):
             if (self.dist(last_pose,waypoints[index].position) < threshold):
                 first = waypoints[index]
+                print("Distance last pose and waypoints  " + str(first.position), flush=True)
                 last_pose = waypoints[index].position
             else:
                 break
@@ -654,24 +656,29 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                 changed = True
                                 wp = waypoints[next_index]
                                 wp.approach_lanes = waypoints[parent_index].approach_lanes
+                                print("Distance waypoint next  " + str(wp.position), flush=True)
                                 second.append(wp)
                         else:
                             # append if next waypoint changes
                             changed = True
                             wp = waypoints[index]
                             wp.approach_lanes = waypoints[parent_index].approach_lanes
+                            print("Append if next waypoint changes  " + str(wp.position), flush=True)
                             second.append(wp)
                     else:
                         # we add the current index to second
                         changed = True
                         wp = waypoints[index]
                         wp.approach_lanes = waypoints[parent_index].approach_lanes
+                        print("Add the current index to second  " + str(wp.position), flush=True)
                         second.append(wp)
                     last_pose = waypoints[index].position
                     index = next_index
             else:
                 index = index + 1
 
+        for i in range(len(second)):
+            print("Waypoints finales " + str(second[i].position), flush=True)
         return (first, second)
 
     def complete_robot_action(self):
