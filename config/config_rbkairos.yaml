@@ -16,8 +16,8 @@ rmf_fleet:
     battery_topic: "battery/#"
     distance: 0.5
   limits:
-    linear: [3, 3] # velocity, acceleration
-    angular: [3, 3] # velocity, acceleration
+    linear: [0.75, 0.2] # velocity, acceleration
+    angular: [0.785, 0.2] # velocity, acceleration
   profile: # Robot profile is modelled as a circle
     footprint: 0.75 # radius in m
     vicinity: 0.5 # radius in m
