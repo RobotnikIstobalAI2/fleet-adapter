@@ -1,11 +1,11 @@
 ---
-version: "3.7"
+name: fleet-adapter
 services:
-  fleet-adapter:
-    image: fleet-adapter:humble-0.1.1
+  adapter:
+    image: fleet-adapter:humble-0.1.2-rc01
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    network_mode: host
-    ipc: host
-    stop_signal: SIGINT
+    environment:
+      FLEET_CONFIG_FILE: /home/robot/config/config_rbkairos.yaml
+      GRAPH_CONFIG_FILE: /home/robot/graph/0.yaml
