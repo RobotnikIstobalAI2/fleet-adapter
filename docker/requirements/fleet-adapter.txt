@@ -1,1 +1,2 @@
 ros-${ROS_DISTRO}-rmf-fleet-adapter-python
+python3-pip
