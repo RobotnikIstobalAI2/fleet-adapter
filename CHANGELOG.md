@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2] - 2023-08-24
+
+### Added
+
+- Added github actions for automatic release and image push
+- Added new environment to gain more file grain control of each parameter
+
+### Changed
+- Changed to robotnik public `robotnik/ros:humble-{base/builder}-5567def-20230823` ros images as docker image base.
+- Now the ros packages are deb generated
+
+
 ## [0.1.1] - 2023-07-18
 
 ### Add

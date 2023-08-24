@@ -30,22 +30,29 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-FROM rmf-core-base:humble-0.1.1
+ARG base_image="robotnik/ros"
+ARG ros_distro="humble"
+ARG image_version=5567def-20230823
 
-LABEL authors="Emima Jiva <emji@ai2.upv.es>"
-LABEL maintainers="Emima Jiva <emji@ai2.upv.es>"
+FROM ${base_image}:${ros_distro}-builder-$image_version as builder
 
-SHELL ["/bin/bash", "-c"]
-ENTRYPOINT ["/ros_entrypoint.sh"]
+#Copy fleet_adapter_mqtt
+COPY --chown=$USER_NAME \
+  fleet_adapter_mqtt/  \
+  $USER_WORKSPACE/src/fleet_adapter_mqtt
 
-# Set non root user
-ARG config_dir=$USER_HOME/config
-ARG graph_dir=$USER_HOME/graph
+RUN generate_debs.sh
 
-#Set enviorment variables 
-ENV CONFIG_DIR 	$config_dir
-ENV GRAPH_DIR   $graph_dir
+FROM  ${base_image}:${ros_distro}-gui-$image_version as base
 
+LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
+      org.opencontainers.image.title="fleet-adapter" \
+      org.opencontainers.image.version="0.1.2" \
+      org.opencontainers.image.description="Open-RMF Mqtt fleet adapter" \
+      org.opencontainers.image.source="https://github.com/RobotnikIstobalAI2/fleet-adapter" \
+      org.opencontainers.image.vendor="Robotnik Automation S.L." \
+      org.opencontainers.image.licenses="BSD-3-Clause" \
+      org.opencontainers.image.authors="Emima Jiva <emji@ai2.upv.es>, Guillem Gari <ggari@robotnik.es>"
 USER root
 
 RUN --mount=type=bind,source=./docker/requirements/fleet-adapter.txt,target=/tmp/requirements.txt true \
@@ -59,6 +66,25 @@ RUN --mount=type=bind,source=./docker/requirements/fleet-adapter.txt,target=/tmp
 
 RUN --mount=type=bind,source=./docker/requirements/python.txt,target=/tmp/requirements.txt true \
 	&& pip install -r /tmp/requirements.txt
+
+USER root
+RUN --mount=type=bind,from=builder,source=${USER_WORKSPACE}/debs,target=/tmp/debs \
+    apt update && \
+    apt-get install -y --no-install-recommends \
+        /tmp/debs/*.deb \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["bash", "-c", "/usr/local/bin/ros_launcher.sh"]
+
+USER $USER_NAME
+
+# Set non root user
+ARG config_dir=$USER_HOME/config
+ARG graph_dir=$USER_HOME/graph
+
+#Set enviorment variables
+ENV CONFIG_DIR 	$config_dir
+ENV GRAPH_DIR   $graph_dir
 
 #Copy config folder
 RUN mkdir -p $CONFIG_DIR
@@ -74,32 +100,11 @@ COPY --chown=$user_name \
 	graph/ \
 	$GRAPH_DIR/
 
-#Copy fleet_adapter_mqtt
-WORKDIR $ROBOT_WS_SRC
-COPY --chown=$user_name \
-	fleet_adapter_mqtt/fleet_adapter_mqtt \
-	$ROBOT_WS_SRC/fleet_adapter_mqtt
-
-ENV ROS_BU_PKG "fleet_adapter_mqtt"
-ENV ROS_BU_PRG "fleet_adapter"
 ENV FLEET_CONFIG_FILE "${CONFIG_DIR}/config_rbkairos.yaml"
 ENV GRAPH_CONFIG_FILE "${GRAPH_DIR}/0.yaml"
 
-USER $USER_NAME
-WORKDIR $ROBOT_WS
-RUN /bin/bash -c 'source /opt/ros/humble/setup.bash; colcon build'
-ENV ROS_SETUP_FILES "${ROBOT_WS}/install/setup.bash"
-
-CMD ros2 run ${ROS_BU_PKG} ${ROS_BU_PRG} \
- 	-c ${FLEET_CONFIG_FILE} \
- 	-n ${GRAPH_CONFIG_FILE}
-
-
-
-
-
-
-
-
-
-
+ENV ROS_STARTUP_TYPE "run"
+# package to launch
+ENV ROS_BU_PKG "fleet_adapter_mqtt"
+# script of program to launch with all its arguments
+ENV ROS_BU_LAUNCH "fleet_adapter -c \${FLEET_CONFIG_FILE} -n \${GRAPH_CONFIG_FILE}"

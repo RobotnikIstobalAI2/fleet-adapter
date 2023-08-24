@@ -4,7 +4,7 @@ package_name = 'fleet_adapter_mqtt'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.2',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -13,9 +13,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Yadunund',
-    maintainer_email='yadunund@openrobotics.org',
-    description='A template for an RMF fleet adapter',
+    maintainer='Emima Jiva',
+    maintainer_email='emji@ai2.upv.es',
+    description='Robotnik MQTT RMF fleet adapter',
     license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
