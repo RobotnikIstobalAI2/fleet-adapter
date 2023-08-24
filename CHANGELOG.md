@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] - 2023-08-24
+## [0.1.2-rc01] - 2023-08-24
 
 ### Added
 
