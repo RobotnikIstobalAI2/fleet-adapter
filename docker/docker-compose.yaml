@@ -2,7 +2,7 @@
 name: fleet-adapter
 services:
   adapter:
-    image: fleet-adapter:humble-0.1.2-rc01
+    image: fleet-adapter:humble-0.1.2
     build:
       context: ..
       dockerfile: docker/Dockerfile

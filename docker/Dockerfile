@@ -47,7 +47,7 @@ FROM  ${base_image}:${ros_distro}-gui-$image_version as base
 
 LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
       org.opencontainers.image.title="fleet-adapter" \
-      org.opencontainers.image.version="0.1.2-rc01" \
+      org.opencontainers.image.version="0.1.2" \
       org.opencontainers.image.description="Open-RMF Mqtt fleet adapter" \
       org.opencontainers.image.source="https://github.com/RobotnikIstobalAI2/fleet-adapter" \
       org.opencontainers.image.vendor="Robotnik Automation S.L." \
