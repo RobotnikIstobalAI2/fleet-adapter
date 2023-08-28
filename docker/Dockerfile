@@ -32,7 +32,7 @@
 
 ARG base_image="robotnik/ros"
 ARG ros_distro="humble"
-ARG image_version=5567def-20230823
+ARG image_version=12e129f-20230828
 
 FROM ${base_image}:${ros_distro}-builder-$image_version as builder
 
