@@ -32,7 +32,7 @@
 
 ARG base_image="robotnik/ros"
 ARG ros_distro="humble"
-ARG image_version=12e129f-20230828
+ARG image_version=8aae304-20230829
 
 FROM ${base_image}:${ros_distro}-builder-$image_version as builder
 
@@ -47,7 +47,7 @@ FROM  ${base_image}:${ros_distro}-gui-$image_version as base
 
 LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
       org.opencontainers.image.title="fleet-adapter" \
-      org.opencontainers.image.version="0.2.0-rc01" \
+      org.opencontainers.image.version="devel" \
       org.opencontainers.image.description="Open-RMF Mqtt fleet adapter" \
       org.opencontainers.image.source="https://github.com/RobotnikIstobalAI2/fleet-adapter" \
       org.opencontainers.image.vendor="Robotnik Automation S.L." \
