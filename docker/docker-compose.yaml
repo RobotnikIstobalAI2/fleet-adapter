@@ -3,12 +3,6 @@ name: fleet-adapter
 services:
   adapter:
     image: fleet-adapter:humble-devel
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        # Base image to contruct current image
-        image_version: 0.2.1
     environment:
       FLEET_CONFIG_FILE: /home/robot/config/config_rbkairos.yaml
       GRAPH_CONFIG_FILE: /home/robot/graph/0.yaml

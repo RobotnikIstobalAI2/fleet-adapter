@@ -1,0 +1,11 @@
+---
+name: fleet-adapter
+services:
+  adapter:
+    image: fleet-adapter:humble-devel
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        # Base image to contruct current image
+        image_version: 0.2.1
