@@ -103,7 +103,7 @@ COPY --chown=$user_name \
 ENV FLEET_CONFIG_FILE "${CONFIG_DIR}/config_rbkairos.yaml"
 ENV GRAPH_CONFIG_FILE "${GRAPH_DIR}/0.yaml"
 
-ENV ROS_STARTUP_TYPE "run"
+ENV STARTUP_TYPE "run"
 # package to launch
 ENV ROS_BU_PKG "fleet_adapter_mqtt"
 # script of program to launch with all its arguments
