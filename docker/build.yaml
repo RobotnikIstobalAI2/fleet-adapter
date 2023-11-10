@@ -8,4 +8,4 @@ services:
       dockerfile: docker/Dockerfile
       args:
         # Base image to contruct current image
-        image_version: 0.2.1
+        image_version: 0.4.0
