@@ -1,4 +1,4 @@
-# RobotDelivery.py
+ # RobotDelivery.py
 #
 # @author Emima Jiva. (c) ai2-UPV Todos los derechos reservados.
 #
@@ -8,140 +8,122 @@
 
 import rmf_dispenser_msgs.msg as dispenser_msgs
 import rmf_ingestor_msgs.msg as ingestor_msgs
+import rmf_task_msgs.msg as task_msgs
 
 import rclpy
 import time
 from rclpy.node import Node
 from functools import partial
+import json
 
 DISPENSER_RESULT_ACKNOWLEDGED = 0
 DISPENSER_RESULT_SUCCESS = 1
 DISPENSER_RESULT_FAILED = 2
 
-DISPENSER_STATE_IDLE = 0
-DISPENSER_STATE_BUSY = 1
-DISPENSER_STATE_OFFLINE = 2
+INGESTOR_RESULT_ACKNOWLEDGED = 0
+INGESTOR_RESULT_SUCCESS = 1
+INGESTOR_RESULT_FAILED = 2
 
-class Dispenser(Node):
-    def __init__(self, name):
+DISPENSER_REQUEST  = 1
+DISPENSER_RESULT = 2
+INGESTOR_REQUEST = 3
+INGESTOR_RESULT = 4
+
+class DeliveryTask(Node):
+    def __init__(self, name, api):
         super().__init__(name)
 
         # Variables
-        self.reset(name)
-        self.request_sub = self.create_subscription(
-            dispenser_msgs.DispenserRequest,
-            '/dispenser_requests',
-            self._process_request_cb,
+        self.list_tasks = {}
+        self.state_task = {}
+        self.api = api
+
+        self.api.client.message_callback_add('dispenser_results/#', self._dispenser_results_cb)
+        self.api.client.subscribe('dispenser_results/#', 2)
+
+        self.api.client.message_callback_add('ingestor_results/#', self._ingestor_results_cb)
+        self.client = self.api.client.subscribe('ingestor_results/#', 2)
+
+        self.dispatch_states = self.create_subscription(
+            task_msgs.DispatchStates,
+            '/dispatch_states',
+            self._dispatch_states_cb,
             1
         )
-        self.result_pub = self.create_publisher(
+        self.dispenser_sub = self.create_subscription(
+            dispenser_msgs.DispenserRequest,
+            '/dispenser_requests',
+            self._dispenser_request_cb,
+            1
+        )
+        self.dispenser_pub = self.create_publisher(
             dispenser_msgs.DispenserResult,
             '/dispenser_results',
             1
-        )        
-    def reset(self, name=None):
-        if name is not None:
-            self.name = name
-
-        self.status = {}
-        self.success_flag = False
-
-        try:
-            self.timer.reset()
-            self.timer.cancel()
-        except Exception:
-            pass
-
-        self.timer = None        
-    
-    def _process_request_cb(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg)
-        if self.status.get(msg.request_guid) is None:
-            self.status[msg.request_guid] = DISPENSER_RESULT_ACKNOWLEDGED
-            self.wait_robot()
-            self.status[msg.request_guid] = DISPENSER_RESULT_SUCCESS
-            result = dispenser_msgs.DispenserResult()
-            result.time = self.get_clock().now().to_msg()
-            result.status = self.status[msg.request_guid]
-            result.source_guid = self.name
-            result.request_guid = msg.request_guid
-            self.result_pub.publish(result)
-        elif self.status[msg.request_guid] == DISPENSER_RESULT_SUCCESS:
-            self.status[msg.request_guid] = DISPENSER_RESULT_ACKNOWLEDGED
-            self.wait_robot()
-            self.status[msg.request_guid] = DISPENSER_RESULT_SUCCESS
-            result = dispenser_msgs.DispenserResult()
-            result.time = self.get_clock().now().to_msg()
-            result.status = self.status[msg.request_guid]
-            result.source_guid = self.name
-            result.request_guid = msg.request_guid
-            self.result_pub.publish(result)
-        else: 
-            self.status[msg.request_guid] =  DISPENSER_RESULT_ACKNOWLEDGED
-            self.get_logger().info('Aknowledged')
-    
-    def wait_robot(self):
-        self.get_logger().info('Hacemos algo')
-        time.sleep(5)
-
-class Ingestor(Node):
-    def __init__(self, name):
-        super().__init__(name)
-
-        # Variables
-        self.reset(name)
-        self.request_sub = self.create_subscription(
+        )
+        self.ingestor_sub = self.create_subscription(
             ingestor_msgs.IngestorRequest,
             '/ingestor_requests',
-            self._process_request_cb,
+            self._ingestor_request_cb,
             1
         )
-        self.result_pub = self.create_publisher(
+        self.ingestor_pub = self.create_publisher(
             ingestor_msgs.IngestorResult,
             '/ingestor_results',
             1
-        )        
-    def reset(self, name=None):
-        if name is not None:
-            self.name = name
+        )  
 
-        self.status = {}
-        self.success_flag = False
+    def _dispatch_states_cb(self, msg):
+        for i in range(len(msg.active)):
+            task = msg.active[i].task_id
+            robot_name = msg.active[i].assignment.expected_robot_name
+            self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks) 
+            self.list_tasks[task] =  robot_name
+        # for i in range(len(msg.finished)):
+        #     task = msg.active[i].task_id
+        #     del self.list_tasks[task]
+        #     self.get_logger().info('LIST_TASKS FINISHED: "%s"' % self.list_tasks)  
 
-        try:
-            self.timer.reset()
-            self.timer.cancel()
-        except Exception:
-            pass
-
-        self.timer = None        
+    def _dispenser_request_cb(self, msg):
+        task = msg.request_guid
+        if self.list_tasks.get(task) is not None:
+            robot_name = self.list_tasks[task]
+            if (self.state_task.get(robot_name) is None) or  self.state_task.get(robot_name) is not DISPENSER_REQUEST:
+                self.state_task[robot_name] = DISPENSER_REQUEST
+                self.api.pub_dispenser_requests(robot_name, task)
     
-    def _process_request_cb(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg)
-        if self.status.get(msg.request_guid) is None:
-            self.status[msg.request_guid] = DISPENSER_RESULT_ACKNOWLEDGED
-            self.wait_robot()
-            self.status[msg.request_guid] = DISPENSER_RESULT_SUCCESS
-            result = ingestor_msgs.IngestorResult()
-            result.time = self.get_clock().now().to_msg()
-            result.status = self.status[msg.request_guid]
-            result.source_guid = self.name
-            result.request_guid = msg.request_guid
-            self.result_pub.publish(result)
-        elif self.status[msg.request_guid] == DISPENSER_RESULT_SUCCESS:
-            self.status[msg.request_guid] = DISPENSER_RESULT_ACKNOWLEDGED
-            self.wait_robot()
-            self.status[msg.request_guid] = DISPENSER_RESULT_SUCCESS
-            result = ingestor_msgs.IngestorResult()
-            result.time = self.get_clock().now().to_msg()
-            result.status = self.status[msg.request_guid]
-            result.source_guid = self.name
-            result.request_guid = msg.request_guid
-            self.result_pub.publish(result)
-        else: 
-            self.status[msg.request_guid] =  DISPENSER_RESULT_ACKNOWLEDGED
-            self.get_logger().info('Aknowledged')
+    def _dispenser_results_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        self.get_logger().info('REQUEST_ID: "%s"' % robot_name)
+        self.state_task[robot_name] = DISPENSER_RESULT
+        decoded_message=str(msg.payload.decode("utf-8"))
+        request_guid = json.loads(decoded_message)['data']
+        self.get_logger().info('REQUEST_ID: "%s"' % request_guid)
+        result = dispenser_msgs.DispenserResult()
+        result.time = self.get_clock().now().to_msg()
+        result.status = DISPENSER_RESULT_SUCCESS
+        result.request_guid = request_guid
+        self.dispenser_pub.publish(result)
+
+    def _ingestor_request_cb(self, msg):
+        task = msg.request_guid
+        robot_name = self.list_tasks[task]
+        if (self.state_task.get(robot_name) is None) or  self.state_task.get(robot_name) is not INGESTOR_REQUEST:
+            self.state_task[robot_name] = INGESTOR_REQUEST
+            self.api.pub_ingestor_requests(robot_name, task)
+
+    def _ingestor_results_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        self.state_task[robot_name] = INGESTOR_RESULT
+        decoded_message=str(msg.payload.decode("utf-8"))
+        request_guid = json.loads(decoded_message)['data']
+        self.get_logger().info('REQUEST_ID_INGESTOR: "%s"' % request_guid)
+        result = ingestor_msgs.IngestorResult()
+        result.time = self.get_clock().now().to_msg()
+        result.status = DISPENSER_RESULT_SUCCESS
+        result.request_guid = request_guid
+        self.ingestor_pub.publish(result)
+
     
-    def wait_robot(self):
-        self.get_logger().info('Hacemos algo')
-        time.sleep(5)
+
+

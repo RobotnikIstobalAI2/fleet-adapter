@@ -126,7 +126,7 @@ class RobotAPI:
         client.subscribe(feedback_topic, 2)
         client.subscribe(battery_topic, 2)
         return client
-
+    
     def on_message_pose(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         pose=json.loads(decoded_message)['pose']['pose']
@@ -248,3 +248,10 @@ class RobotAPI:
         '''Return whether the robot needs RMF to replan'''
         return False
         
+    def pub_dispenser_requests(self, robot_name: str, task_id: str):
+        data = { "data": task_id }
+        self.client.publish("dispenser_requests/" + robot_name ,json.dumps(data), 2)
+
+    def pub_ingestor_requests(self, robot_name: str, task_id: str):
+        data = { "data": task_id }
+        self.client.publish("ingestor_requests/" + robot_name ,json.dumps(data), 2)

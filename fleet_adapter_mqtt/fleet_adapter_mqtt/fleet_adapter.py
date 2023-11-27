@@ -37,8 +37,7 @@ from functools import partial
 
 from .RobotCommandHandle import RobotCommandHandle
 from .RobotClientAPI import RobotAPI
-from .RobotDelivery import Dispenser
-from .RobotDelivery import Ingestor
+from .RobotDelivery import DeliveryTask
 
 # ------------------------------------------------------------------------------
 # Helper functions
@@ -327,7 +326,7 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     add_robots = threading.Thread(target=_add_fleet_robots, args=())
     add_robots.start()
-    return adapter
+    return adapter, api
 
 
 # ------------------------------------------------------------------------------
@@ -374,22 +373,19 @@ def main(argv=sys.argv):
     else:
         server_uri = args.server_uri
 
-    adapter = initialize_fleet(
+    adapter, api = initialize_fleet(
         config_yaml,
         nav_graph_path,
         node,
         args.use_sim_time,
         server_uri)
 
-    #Init Dispenser
-    dispenser = Dispenser("dispenser1")
-    #Init Ingestor
-    ingestor = Ingestor("ingestor1")
+    #Init delivery
+    delivery_task = DeliveryTask("delivery_task", api)
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)
-    rclpy_executor.add_node(dispenser)
-    rclpy_executor.add_node(ingestor)
+    rclpy_executor.add_node(delivery_task)
 
     # Start the fleet adapter
     rclpy_executor.spin()
