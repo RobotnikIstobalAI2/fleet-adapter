@@ -39,10 +39,10 @@ class DeliveryTask(Node):
         self.api = api
 
         self.api.client.message_callback_add(disp_res_topic, self._dispenser_results_cb)
-        self.api.client.subscribe(ing_res_topic, 2)
+        self.api.client.subscribe(disp_res_topic, 2)
 
-        self.api.client.message_callback_add('ingestor_result/#', self._ingestor_results_cb)
-        self.client = self.api.client.subscribe('ingestor_result/#', 2)
+        self.api.client.message_callback_add(ing_res_topic, self._ingestor_results_cb)
+        self.client = self.api.client.subscribe(ing_res_topic, 2)
 
         self.dispatch_states = self.create_subscription(
             task_msgs.DispatchStates,
