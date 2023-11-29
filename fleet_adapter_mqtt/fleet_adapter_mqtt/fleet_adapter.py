@@ -229,8 +229,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['fleet_manager']['result_topic'],
         fleet_config['fleet_manager']['battery_topic'],
         fleet_config['fleet_manager']['distance'],
-        config_yaml['delivery']['dispenser_req'],
-        config_yaml['delivery']['ingestor_req'])
+        fleet_config['delivery']['dispenser_req'],
+        fleet_config['delivery']['ingestor_req'])
 
     # Initialize robots for this fleet
 
