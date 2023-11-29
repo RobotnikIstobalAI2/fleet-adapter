@@ -228,7 +228,9 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['fleet_manager']['feedback_topic'],
         fleet_config['fleet_manager']['result_topic'],
         fleet_config['fleet_manager']['battery_topic'],
-        fleet_config['fleet_manager']['distance'])
+        fleet_config['fleet_manager']['distance'],
+        config_yaml['delivery']['dispenser_req'],
+        config_yaml['delivery']['ingestor_req'])
 
     # Initialize robots for this fleet
 
@@ -380,8 +382,10 @@ def main(argv=sys.argv):
         args.use_sim_time,
         server_uri)
 
+    dis_res_topic = config_yaml['delivery']['dispenser_res']
+    ing_res_topic = config_yaml['delivery']['ingestor_res']
     #Init delivery
-    delivery_task = DeliveryTask("delivery_task", api)
+    delivery_task = DeliveryTask("delivery_task", api, dis_res_topic, ing_res_topic)
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)

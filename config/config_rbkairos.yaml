@@ -15,6 +15,11 @@ rmf_fleet:
     result_topic: "result/#"
     battery_topic: "battery/#"
     distance: 0.5
+  delivery:
+    dispenser_req: /dispenser_requests
+    ingestor_req: ingestor_requests/
+    dispenser_res: dispenser_result/#
+    ingestor_res: ingestor_result/#
   limits:
     linear: [0.75, 0.2] # velocity, acceleration
     angular: [0.785, 0.2] # velocity, acceleration

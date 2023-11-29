@@ -80,7 +80,10 @@ class RobotAPI:
     # requirements of their robot's API
     def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
                 pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
-                goal_dist: int):
+                goal_dist: int, dispenser_topic: str, ingestor_topic: str):
+        #Delivery topic
+        self.dispenser_topic = dispenser_topic
+        self.ingestor_topic = ingestor_topic
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -250,8 +253,8 @@ class RobotAPI:
         
     def pub_dispenser_requests(self, robot_name: str, task_id: str):
         data = { "data": task_id }
-        self.client.publish("dispenser_requests/" + robot_name ,json.dumps(data), 2)
+        self.client.publish(robot_name + self.dispenser_topic ,json.dumps(data), 2)
 
     def pub_ingestor_requests(self, robot_name: str, task_id: str):
         data = { "data": task_id }
-        self.client.publish("ingestor_requests/" + robot_name ,json.dumps(data), 2)
+        self.client.publish(self.ingestor_topic + robot_name ,json.dumps(data), 2)

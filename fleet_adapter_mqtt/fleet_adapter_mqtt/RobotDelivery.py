@@ -30,7 +30,7 @@ INGESTOR_REQUEST = 3
 INGESTOR_RESULT = 4
 
 class DeliveryTask(Node):
-    def __init__(self, name, api):
+    def __init__(self, name, api, disp_res_topic, ing_res_topic):
         super().__init__(name)
 
         # Variables
@@ -38,11 +38,11 @@ class DeliveryTask(Node):
         self.state_task = {}
         self.api = api
 
-        self.api.client.message_callback_add('dispenser_results/#', self._dispenser_results_cb)
-        self.api.client.subscribe('dispenser_results/#', 2)
+        self.api.client.message_callback_add(disp_res_topic, self._dispenser_results_cb)
+        self.api.client.subscribe(ing_res_topic, 2)
 
-        self.api.client.message_callback_add('ingestor_results/#', self._ingestor_results_cb)
-        self.client = self.api.client.subscribe('ingestor_results/#', 2)
+        self.api.client.message_callback_add('ingestor_result/#', self._ingestor_results_cb)
+        self.client = self.api.client.subscribe('ingestor_result/#', 2)
 
         self.dispatch_states = self.create_subscription(
             task_msgs.DispatchStates,
@@ -79,10 +79,6 @@ class DeliveryTask(Node):
             robot_name = msg.active[i].assignment.expected_robot_name
             self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks) 
             self.list_tasks[task] =  robot_name
-        # for i in range(len(msg.finished)):
-        #     task = msg.active[i].task_id
-        #     del self.list_tasks[task]
-        #     self.get_logger().info('LIST_TASKS FINISHED: "%s"' % self.list_tasks)  
 
     def _dispenser_request_cb(self, msg):
         task = msg.request_guid
