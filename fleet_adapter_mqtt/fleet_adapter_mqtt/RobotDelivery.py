@@ -116,7 +116,7 @@ class DeliveryTask(Node):
         self.get_logger().info('REQUEST_ID_INGESTOR: "%s"' % request_guid)
         result = ingestor_msgs.IngestorResult()
         result.time = self.get_clock().now().to_msg()
-        result.status = DISPENSER_RESULT_SUCCESS
+        result.status = INGESTOR_RESULT_SUCCESS
         result.request_guid = request_guid
         self.ingestor_pub.publish(result)
 
