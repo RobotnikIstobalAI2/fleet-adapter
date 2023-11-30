@@ -382,8 +382,8 @@ def main(argv=sys.argv):
         args.use_sim_time,
         server_uri)
 
-    dis_res_topic = config_yaml['delivery']['dispenser_res']
-    ing_res_topic = config_yaml['delivery']['ingestor_res']
+    dis_res_topic = config_yaml['rmf_fleet']['delivery']['dispenser_res']
+    ing_res_topic = config_yaml['rmf_fleet']['delivery']['ingestor_res']
     #Init delivery
     delivery_task = DeliveryTask("delivery_task", api, dis_res_topic, ing_res_topic)
     # Create executor for the command handle node
