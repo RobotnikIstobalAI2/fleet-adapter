@@ -32,9 +32,10 @@
 
 ARG base_image="robotnik/ros"
 ARG ros_distro="humble"
-ARG image_version="use-args"
+ARG image_base_version="use-args"
+ARG version="use-args"
 
-FROM ${base_image}:${ros_distro}-builder-$image_version as builder
+FROM ${base_image}:${ros_distro}-builder-${image_base_version} as builder
 
 #Copy fleet_adapter_mqtt
 COPY --chown=$USER_NAME \
@@ -43,11 +44,11 @@ COPY --chown=$USER_NAME \
 
 RUN generate_debs.sh
 
-FROM  ${base_image}:${ros_distro}-gui-$image_version as base
+FROM  ${base_image}:${ros_distro}-base-${image_base_version} as base
 
 LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
       org.opencontainers.image.title="fleet-adapter" \
-      org.opencontainers.image.version="devel" \
+      org.opencontainers.image.version="${version}" \
       org.opencontainers.image.description="Open-RMF Mqtt fleet adapter" \
       org.opencontainers.image.source="https://github.com/RobotnikIstobalAI2/fleet-adapter" \
       org.opencontainers.image.vendor="Robotnik Automation S.L." \
@@ -55,7 +56,7 @@ LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
       org.opencontainers.image.authors="Emima Jiva <emji@ai2.upv.es>, Guillem Gari <ggari@robotnik.es>"
 USER root
 
-RUN --mount=type=bind,source=./docker/requirements/fleet-adapter.txt,target=/tmp/requirements.txt true \
+RUN --mount=type=bind,source=./container/builder/requirements/fleet-adapter.txt,target=/tmp/requirements.txt true \
   && apt-get update \
   && apt-get install -q -y \
   --no-install-recommends \
@@ -64,7 +65,7 @@ RUN --mount=type=bind,source=./docker/requirements/fleet-adapter.txt,target=/tmp
   && apt-get autoremove -q -y \
   && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=bind,source=./docker/requirements/python.txt,target=/tmp/requirements.txt true \
+RUN --mount=type=bind,source=./container/builder/requirements/python.txt,target=/tmp/requirements.txt true \
 	&& pip install -r /tmp/requirements.txt
 
 USER root

@@ -1,11 +1,17 @@
 ---
-name: open-rmf
+name: ${IMAGE_NAME}
 services:
-  core:
-    image: ${REGISTRY_BASE}/library/${IMAGE_NAME}:humble-${GITHUB_REF_NAME}
+  container:
+    image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/${IMAGE_NAME}:humble-${GITHUB_REF_NAME}
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: ../..
+      dockerfile: container/builder/Dockerfile
+      network: host
+      pull: true
+      no_cache: true
       args:
         # Base image to contruct current image
-        image_version: 0.4.0
+        image_base_version: a07f857-20231115
+        ros_distro: humble
+        base_image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/ros
+        version: ${GITHUB_REF_NAME}
