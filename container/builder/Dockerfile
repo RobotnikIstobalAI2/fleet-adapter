@@ -91,17 +91,17 @@ ENV GRAPH_DIR   $graph_dir
 RUN mkdir -p $CONFIG_DIR
 WORKDIR $CONFIG_DIR
 COPY --chown=$user_name \
-	config/ \
+	data/config/ \
 	$CONFIG_DIR/
 
 #Copy graph folder
 RUN mkdir -p $GRAPH_DIR
 WORKDIR $GRAPH_DIR
 COPY --chown=$user_name \
-	graph/ \
+	data/graph/ \
 	$GRAPH_DIR/
 
-ENV FLEET_CONFIG_FILE "${CONFIG_DIR}/config_rbkairos.yaml"
+ENV FLEET_CONFIG_FILE "${CONFIG_DIR}/config_robotnik_fleet.yaml"
 ENV GRAPH_CONFIG_FILE "${GRAPH_DIR}/0.yaml"
 
 ENV STARTUP_TYPE "run"
