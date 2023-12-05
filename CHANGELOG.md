@@ -10,6 +10,7 @@
 ### Changed
 - Modified navigation completed
 - Changed robot speed in config file
+- Improved github actions workflows
 
 ## [0.1.2] - 2023-08-24
 
