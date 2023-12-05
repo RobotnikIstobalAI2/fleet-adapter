@@ -8,8 +8,9 @@ Launch fleet-adapter.  This step adds new elements at the visualization that is 
 git clone git@github.com:RobotnikIstobalAI2/fleet-adapter.git
 cd fleet-adapter
 git checkout humble-devel
-cd docker
-docker compose -f build.yaml build
+cd container/builder
+docker compose build
+cd ..
 ```
 
 ## Launch docker with fleet-adapter
