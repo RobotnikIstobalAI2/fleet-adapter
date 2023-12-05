@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0] - 2023-12-04
+## [0.2.0-rc01] - 2023-12-04
 
 ### Added
 - Added delivery mission
