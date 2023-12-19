@@ -2,7 +2,7 @@
 name: fleet-adapter
 services:
   adapter:
-    image: fleet-adapter:humble-devel
+    image: fleet-adapter:humble-0.2.0
     build:
       context: ../..
       dockerfile: container/builder/Dockerfile
@@ -10,4 +10,4 @@ services:
         # Base image to contruct current image
         image_base_version: a07f857-20231115
         ros_distro: humble
-        version: devel
+        version: 0.2.0
