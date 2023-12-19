@@ -14,10 +14,15 @@ rmf_fleet:
     feedback_topic: "feedback/#"
     result_topic: "result/#"
     battery_topic: "battery/#"
-    distance: 0.2
+    distance: 0.5
+  delivery:
+    dispenser_req: /dispenser_requests
+    ingestor_req: ingestor_requests/
+    dispenser_res: dispenser_result/#
+    ingestor_res: ingestor_result/#
   limits:
-    linear: [3, 3] # velocity, acceleration
-    angular: [3, 3] # velocity, acceleration
+    linear: [0.75, 0.2] # velocity, acceleration
+    angular: [0.785, 0.2] # velocity, acceleration
   profile: # Robot profile is modelled as a circle
     footprint: 0.75 # radius in m
     vicinity: 0.5 # radius in m
@@ -42,7 +47,12 @@ rmf_fleet:
     loop: True
     delivery: True
     clean: False
+    patrol: True
     finishing_request: "nothing" # [park, charge, nothing]
+    action_categories: ["teleop"]
+  lane_merge_distance: 0.5
+  waypoint_merge_distance: 0.5
+  filer_waypoints: True
 
 # Custom robot CONFIG =================================================================
 
@@ -53,9 +63,9 @@ robots:
   robot_a:
     robot_config:
       fleet: "robotnik_fleet" # API endpoint for the robot
-      max_delay: 10.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
+      max_delay: 5.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
     rmf_config:
-      robot_state_update_frequency: 0.5
+      robot_state_update_frequency: 5
       start:
         map_name: "robot_map"
         waypoint: "parking1"
@@ -67,7 +77,7 @@ robots:
       fleet: "robotnik_fleet" # API endpoint for the robot
       max_delay: 10.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
     rmf_config:
-      robot_state_update_frequency: 0.5
+      robot_state_update_frequency: 5
       start:
         map_name: "robot_map"
         waypoint: "parking2"
@@ -79,7 +89,7 @@ robots:
       fleet: "robotnik_fleet" # API endpoint for the robot
       max_delay: 10.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
     rmf_config:
-      robot_state_update_frequency: 0.5
+      robot_state_update_frequency: 5
       start:
         map_name: "robot_map"
         waypoint: "parking3"
@@ -91,7 +101,7 @@ robots:
       fleet: "robotnik_fleet" # API endpoint for the robot
       max_delay: 40.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
     rmf_config:
-      robot_state_update_frequency: 0.5
+      robot_state_update_frequency: 5
       start:
         map_name: "robot_map"
         waypoint: "parking4"
@@ -103,7 +113,7 @@ robots:
       fleet: "robotnik_fleet" # API endpoint for the robot
       max_delay: 30.0 # allowed seconds of delay of the current itinerary before it gets interrupted and replanned
     rmf_config:
-      robot_state_update_frequency: 0.5
+      robot_state_update_frequency: 5
       start:
         map_name: "robot_map"
         waypoint: "parking5"

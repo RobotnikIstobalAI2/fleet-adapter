@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0] - 2023-12-04
+
+### Added
+- Added delivery mission
+- Added ingestor
+- Added filter waypoints
+
+### Changed
+- Modified navigation completed
+- Changed robot speed in config file
+- Improved github actions workflows
+- Changed structure to be more clear 
+
+
 ## [0.1.2] - 2023-08-24
 
 ### Added

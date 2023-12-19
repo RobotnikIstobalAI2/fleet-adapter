@@ -80,7 +80,10 @@ class RobotAPI:
     # requirements of their robot's API
     def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
                 pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
-                goal_dist: int):
+                goal_dist: int, dispenser_topic: str, ingestor_topic: str):
+        #Delivery topic
+        self.dispenser_topic = dispenser_topic
+        self.ingestor_topic = ingestor_topic
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -126,7 +129,7 @@ class RobotAPI:
         client.subscribe(feedback_topic, 2)
         client.subscribe(battery_topic, 2)
         return client
-
+    
     def on_message_pose(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         pose=json.loads(decoded_message)['pose']['pose']
@@ -166,7 +169,12 @@ class RobotAPI:
             print("No position for " + robot_name)
             return None
 
-    def navigate(self, robot_name: str, pose, map_name: str):
+ 
+    def navigate(self,
+                 robot_name: str,
+                 cmd_id: int,
+                 pose,
+                 map_name: str):
         ''' Request the robot to navigate to pose:[x,y,theta] where x, y and
             and theta are in the robot's coordinate convention. This function
             should return True if the robot has accepted the request,
@@ -196,23 +204,40 @@ class RobotAPI:
         else:
             return False
 
-    def stop(self, robot_name: str):
+    def start_process(self,
+                      robot_name: str,
+                      cmd_id: int,
+                      process: str,
+                      map_name: str):
+        return True
+    
+    def navigation_remaining_duration(self, robot_name: str, cmd_id: int):
+        return 0.0
+    
+    def stop(self, robot_name: str, cmd_id: int):
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
         cancel_all_goals = {"id":""}
         self.client.publish("cancel/"+robot_name ,json.dumps(cancel_all_goals), 2)
         return True
 
-    def navigation_completed(self, robot_name: str):
+    def navigation_completed(self, robot_name: str, cmd_id: int):
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
+        #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
         if (distance < self.goal_dist):
+            self.resultgoal[robot_name] = 0
             print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
             return False 
+        
+    def process_completed(self, robot_name: str, cmd_id: int):
+        ''' Return True if the robot has successfully completed its previous
+            process request. Else False.'''
+        return self.navigation_completed(robot_name, cmd_id)
     
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
@@ -221,3 +246,15 @@ class RobotAPI:
             return self.battery[robot_name]/100
         else:
             return 0.8
+    
+    def requires_replan(self, robot_name: str):
+        '''Return whether the robot needs RMF to replan'''
+        return False
+        
+    def pub_dispenser_requests(self, robot_name: str, task_id: str):
+        data = { "data": task_id }
+        self.client.publish(robot_name + self.dispenser_topic ,json.dumps(data), 2)
+
+    def pub_ingestor_requests(self, robot_name: str, task_id: str):
+        data = { "data": task_id }
+        self.client.publish(self.ingestor_topic + robot_name ,json.dumps(data), 2)
