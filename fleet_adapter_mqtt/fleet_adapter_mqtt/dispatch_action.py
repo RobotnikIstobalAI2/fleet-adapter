@@ -137,7 +137,7 @@ class TaskRequester(Node):
                 _add_action()
                 activities.append({
                         "category": "go_to_place",
-                        "description": "point2"
+                        "description": "point_2"
                     })               
 
         # Add activities to phases

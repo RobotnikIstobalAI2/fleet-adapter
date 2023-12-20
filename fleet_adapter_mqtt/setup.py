@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fleet_adapter=fleet_adapter_mqtt.fleet_adapter:main'
+            'fleet_adapter=fleet_adapter_mqtt.fleet_adapter:main',
+            'dispatch_action=fleet_adapter_mqtt.dispatch_action:main'
         ],
     },
 )
