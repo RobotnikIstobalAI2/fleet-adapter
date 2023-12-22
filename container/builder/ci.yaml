@@ -13,5 +13,5 @@ services:
         # Base image to contruct current image
         image_base_version: 0.5.0
         ros_distro: humble
-        base_image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/ros
+        base_image: ${REGISTRY_BASE}/robotnik/ros
         version: ${GITHUB_REF_NAME}
