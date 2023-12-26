@@ -13,7 +13,7 @@ You can configure it throught the docker-compose file
 name: fleet-adapter
 services:
   adapter:
-    image: fleet-adapter:humble-devel
+    image: fleet-adapter:${ROS_DISTRO}-${VERSION}
     environment:
       FLEET_CONFIG_FILE: /home/robot/config/config_robotnik_fleet.yaml
       GRAPH_CONFIG_FILE: /home/robot/graph/0.yaml
