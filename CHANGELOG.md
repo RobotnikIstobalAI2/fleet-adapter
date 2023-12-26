@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.2.1-rc03] - 2023-12-26
 
 ### Added
 - Added dispatch action package

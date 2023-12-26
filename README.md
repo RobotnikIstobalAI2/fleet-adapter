@@ -24,7 +24,7 @@ services:
 ```bash
 git clone git@github.com:RobotnikIstobalAI2/fleet-adapter.git
 cd fleet-adapter
-git checkout humble-devel
+git checkout 0.2.1-rc03
 cd container/builder
 docker compose build
 cd ..
