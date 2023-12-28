@@ -56,22 +56,32 @@ LABEL maintainer="Guillem Gari <ggari@robotnik.es>" \
       org.opencontainers.image.authors="Emima Jiva <emji@ai2.upv.es>, Guillem Gari <ggari@robotnik.es>"
 USER root
 
-RUN --mount=type=bind,source=./container/builder/requirements/fleet-adapter.txt,target=/tmp/requirements.txt true \
+RUN \
+--mount=type=bind,\
+source=./container/builder/requirements/fleet-adapter.txt,\
+target=/tmp/requirements.txt true \
   && apt-get update \
-  && apt-get install -q -y \
+  && apt-fast install -q -y \
   --no-install-recommends \
     $(eval "echo $(cat /tmp/requirements.txt | xargs)") \
   && apt-get clean -q -y \
   && apt-get autoremove -q -y \
   && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=bind,source=./container/builder/requirements/python.txt,target=/tmp/requirements.txt true \
+RUN \
+--mount=type=bind,\
+source=./container/builder/requirements/python.txt,\
+target=/tmp/requirements.txt true \
 	&& pip install -r /tmp/requirements.txt
 
 USER root
-RUN --mount=type=bind,from=builder,source=${USER_WORKSPACE}/debs,target=/tmp/debs \
+RUN \
+--mount=type=bind,\
+from=builder,\
+source=${USER_WORKSPACE}/debs,\
+target=/tmp/debs \
     apt update && \
-    apt-get install -y --no-install-recommends \
+    apt-fast install -y --no-install-recommends \
         /tmp/debs/*.deb \
     && rm -rf /var/lib/apt/lists/*
 

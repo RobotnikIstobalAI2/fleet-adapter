@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.1] - 2023-12-28
+
+### Added
+- Added dispatch action package
+
+### Changed
+- Changed to robotnik public `robotnik/ros:humble-base-0.5.0` ros images as docker image base.
+- Changed to robotnik public `robotnik/ros:humble-builder-0.5.0` ros images as package builder intermediate image.
+- Use of docker compose environment file `.env` for unified variables
+- Use of `apt-fast` for parallel downloading for apt
+
 ## [0.2.0] - 2023-12-04
 
 ### Added

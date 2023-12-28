@@ -2,7 +2,7 @@
 name: ${IMAGE_NAME}
 services:
   container:
-    image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/${IMAGE_NAME}:humble-${GITHUB_REF_NAME}
+    image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/${IMAGE_NAME}:${ROS_DISTRO}-${GITHUB_REF_NAME}
     build:
       context: ../..
       dockerfile: container/builder/Dockerfile
@@ -11,7 +11,7 @@ services:
       no_cache: true
       args:
         # Base image to contruct current image
-        image_base_version: a07f857-20231115
-        ros_distro: humble
-        base_image: ${REGISTRY_BASE}/${REGISTRY_PROJECT}/ros
+        image_base_version: ${IMAGE_BASE_VERSION}
+        ros_distro: ${ROS_DISTRO}
+        base_image: ${REGISTRY_BASE}/robotnik/ros
         version: ${GITHUB_REF_NAME}
