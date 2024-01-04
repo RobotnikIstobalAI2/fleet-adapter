@@ -19,6 +19,7 @@ import uuid
 import argparse
 import json
 import asyncio
+import math
 
 import rclpy
 from rclpy.node import Node
@@ -63,6 +64,9 @@ class TaskRequester(Node):
         parser.add_argument("--use_tool_sink", action="store_true",
                             help='Use tool sink during perform action, \
                                 default: false')
+        parser.add_argument('-o', '--orientation', required=False, type=float,
+                            help='Orientation to face in degrees (optional)'
+        )
 
         self.args = parser.parse_args(argv[1:])
         self.response = asyncio.Future()
@@ -130,9 +134,12 @@ class TaskRequester(Node):
         else:
             # Add action activities
             for start in self.args.starts:
+                go_to_description = {'waypoint': start}
+                if self.args.orientation is not None:
+                    go_to_description['orientation'] = (self.args.orientation*math.pi/180.0)
                 activities.append({
                         "category": "go_to_place",
-                        "description": start
+                        "description": go_to_description
                     })
                 _add_action()
                 activities.append({
