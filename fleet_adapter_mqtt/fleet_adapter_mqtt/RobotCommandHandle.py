@@ -713,7 +713,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
     def mode_request_cb(self, msg):
         if msg.fleet_name is None or msg.fleet_name != self.fleet_name or\
-                msg.robot_name is None:
+                msg.robot_name is None or msg.robot_name != self.name:
             print("Return request", flush=True)
             return
         if msg.mode.mode == RobotState.IDLE:
