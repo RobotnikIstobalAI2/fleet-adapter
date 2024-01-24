@@ -28,8 +28,6 @@ import rmf_adapter.schedule as schedule
 
 from rmf_fleet_msgs.msg import DockSummary, ModeRequest
 
-from rmf_fleet_msgs.msg import DockSummary
-
 import numpy as np
 
 import threading
@@ -73,7 +71,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                  update_frequency,
                  adapter,
                  api,
-                 lane_merge_distance):
+                 lane_merge_distance, 
+                 finish_ae_topic):
         adpt.RobotCommandHandle.__init__(self)
         self.debug = False
         self.name = name
@@ -85,6 +84,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.transforms = transforms
         self.map_name = map_name
         self.lane_merge_distance = lane_merge_distance
+        self.finish_ae_topic = finish_ae_topic
         self.perform_filtering = True
 
         # Get the index of the charger waypoint
@@ -103,6 +103,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.dock_name = ""
         self.adapter = adapter
         self.action_execution = None
+        self.pub_action_execution = False
 
         self.requested_waypoints = []  # RMF Plan waypoints
         self.remaining_waypoints = []
@@ -163,6 +164,15 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             '/action_execution_notice',
             self.mode_request_cb,
             qos_profile=qos_profile_system_default)
+        
+        self.action_execution_pub = self.node.create_publisher(
+            ModeRequest,
+            '/action_execution_notice',
+            1
+        )
+        
+        self.api.client.message_callback_add(finish_ae_topic, self._finish_ae_cb)
+        self.api.client.subscribe(finish_ae_topic, 2)
 
         self.update_thread = threading.Thread(target=self.update)
         self.update_thread.start()
@@ -548,6 +558,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     self.position, self.dock_waypoint_index)
             # if robot is performing an action
             elif (self.action_execution is not None):
+                if self.pub_action_execution is False:
+                    self.api.publish_action_execution(self.name)
+                    self.pub_action_execution = True
                 print("Aqui podemos hacer algo", flush=True)
                 if not self.started_action:
                     self.started_action = True
@@ -688,6 +701,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             self.action_execution.finished()
             self.action_execution = None
             self.started_action = False
+            self.pub_action_execution = False
             self.node.get_logger().info(f"Robot {self.name} has completed the"
                                         f" action it was performing")
 
@@ -704,3 +718,11 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             return
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
+
+    def _finish_ae_cb(self, msg):
+        execution_notice = ModeRequest()
+        execution_notice.fleet_name = self.fleet_name
+        execution_notice.robot_name = self.name
+        execution_notice.mode = RobotState.IDLE
+        if msg.data is True:
+            self.action_execution_pub.publish(execution_notice)
