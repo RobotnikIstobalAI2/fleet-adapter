@@ -26,7 +26,7 @@ import rmf_adapter as adpt
 import rmf_adapter.plan as plan
 import rmf_adapter.schedule as schedule
 
-from rmf_fleet_msgs.msg import DockSummary, ModeRequest
+from rmf_fleet_msgs.msg import DockSummary, ModeRequest, RobotMode
 
 import numpy as np
 
@@ -35,6 +35,7 @@ import math
 import copy
 import enum
 import time
+import json
 
 from datetime import timedelta
 
@@ -171,8 +172,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             1
         )
         
-        self.api.client.message_callback_add(finish_ae_topic, self._finish_ae_cb)
-        self.api.client.subscribe(finish_ae_topic, 2)
+        self.api.client.message_callback_add(finish_ae_topic + self.name, self._finish_ae_cb)
+        self.api.client.subscribe(finish_ae_topic + self.name, 2)
 
         self.update_thread = threading.Thread(target=self.update)
         self.update_thread.start()
@@ -402,7 +403,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         f"Robot {self.name} has successfully navigated along "
                         f"requested path."
                     )
-
             self._follow_path_thread = threading.Thread(
                 target=_follow_path)
             self._follow_path_thread.start()
@@ -649,7 +649,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         while (not changed and index < len(waypoints)):
             if (self.dist(last_pose,waypoints[index].position) < threshold):
                 first = waypoints[index]
-                print("Distance last pose and waypoints  " + str(first.position), flush=True)
+                #print("Distance last pose and waypoints  " + str(first.position), flush=True)
                 last_pose = waypoints[index].position
             else:
                 break
@@ -669,7 +669,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                 changed = True
                                 wp = waypoints[next_index]
                                 wp.approach_lanes = waypoints[parent_index].approach_lanes
-                                print("Distance waypoint next  " + str(wp.position), flush=True)
+                                #print("Distance waypoint next  " + str(wp.position), flush=True)
                                 second.append(wp)
                         else:
                             # append if next waypoint changes
@@ -690,8 +690,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             else:
                 index = index + 1
 
-        for i in range(len(second)):
-            print("Waypoints finales " + str(second[i].position), flush=True)
+        # for i in range(len(second)):
+        #     print("Waypoints finales " + str(second[i].position), flush=True)
         return (first, second)
 
     def complete_robot_action(self):
@@ -719,10 +719,17 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
 
-    def _finish_ae_cb(self, msg):
-        execution_notice = ModeRequest()
-        execution_notice.fleet_name = self.fleet_name
-        execution_notice.robot_name = self.name
-        execution_notice.mode = RobotState.IDLE
-        if msg.data is True:
+    def _finish_ae_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        decoded_message=str(msg.payload.decode("utf-8"))
+        data = json.loads(decoded_message)['data']
+        print(data, flush=True)
+        print(self.name, flush=True)
+        print(robot_name,flush=True)
+        if (data is True) and (robot_name == self.name):
+            mode = RobotMode()
+            execution_notice = ModeRequest()
+            execution_notice.fleet_name = self.fleet_name
+            execution_notice.robot_name = self.name
+            execution_notice.mode.mode = RobotState.IDLE
             self.action_execution_pub.publish(execution_notice)

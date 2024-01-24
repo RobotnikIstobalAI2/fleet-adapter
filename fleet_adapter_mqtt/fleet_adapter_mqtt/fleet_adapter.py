@@ -237,6 +237,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     missing_robots = config_yaml['robots']
 
+    finish_ae_topic = fleet_config['action_execution']['finish']
+
     def _add_fleet_robots():
         robots = {}
         while len(missing_robots) > 0:
@@ -301,7 +303,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                             'robot_state_update_frequency', 1),
                         adapter=adapter,
                         api=api,
-                        lane_merge_distance=lane_merge_distance,)
+                        lane_merge_distance=lane_merge_distance,
+                        finish_ae_topic=finish_ae_topic)
 
                     if robot.initialized:
                         robots[robot_name] = robot
