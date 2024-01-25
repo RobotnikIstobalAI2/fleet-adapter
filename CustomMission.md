@@ -12,6 +12,7 @@ docker exec -it open-rmf-fleet-adapter-1 bash
 ros2 run fleet_adapter_mqtt dispatch_action -s <start_point> -a teleop -F <fleet_name> -R <robot_name> -o <orientation>
 ```
 The fleet_name and robot_name are optional. If they are not specified, rmf-core will choose which robot to use for the mission.
+
 The orientation is the orientation of the start_point.
 
 ## Building a Custom Task
@@ -24,6 +25,6 @@ Users can build and send their own tasks by publishing <a href="https://github.c
         Use the <a href="https://github.com/open-rmf/rmf_api_msgs/blob/main/rmf_api_msgs/schemas/robot_task_request.json">robot_task_request</a> schema and fill in the JSON payload type with "robot_task_request" to send a task request to a specific robot
         Use the <a href="https://github.com/open-rmf/rmf_api_msgs/blob/main/rmf_api_msgs/schemas/dispatch_task_request.json">dispatch_task_request</a>  schema and fill in the JSON payload type with "dispatch_task_request" to send a task request to the best available fleet
         The request fields for these objects follow the <a href="https://github.com/open-rmf/rmf_api_msgs/blob/main/rmf_api_msgs/schemas/task_request.json">task_request</a> schema
-    4. Populate the object fields with the required information.
+  4. Populate the object fields with the required information.
         The **category** and **description** fields under the **task_request** schema take in the string name of the task and the task description respectively. The JSON schema for these descriptions can be found <a href="https://github.com/open-rmf/rmf_ros2/tree/main/rmf_fleet_adapter/schemas">here</a>.
-    5. Publish the **ApiRequest!**
+  5. Publish the **ApiRequest!**
