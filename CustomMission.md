@@ -28,3 +28,6 @@ Users can build and send their own tasks by publishing <a href="https://github.c
   4. Populate the object fields with the required information.
         The **category** and **description** fields under the **task_request** schema take in the string name of the task and the task description respectively. The JSON schema for these descriptions can be found <a href="https://github.com/open-rmf/rmf_ros2/tree/main/rmf_fleet_adapter/schemas">here</a>.
   5. Publish the **ApiRequest!**
+
+
+For a more detailed explanation, see <a href="https://osrf.github.io/ros2multirobotbook/">open rmf book</a>
