@@ -86,7 +86,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.map_name = map_name
         self.lane_merge_distance = lane_merge_distance
         self.finish_ae_topic = finish_ae_topic
-        self.perform_filtering = True
+        self.perform_filtering = False
 
         # Get the index of the charger waypoint
         waypoint = self.graph.find_waypoint(charger_waypoint)
