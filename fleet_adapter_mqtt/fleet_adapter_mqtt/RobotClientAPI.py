@@ -244,6 +244,7 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
+            print("Battery " +  str(self.battery.get(robot_name)), flush=True)
             return self.battery[robot_name]/100
         else:
             return 0.8
