@@ -244,10 +244,10 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
-            print("Battery " +  str(self.battery.get(robot_name)), flush=True)
+            print("Battery " + str(self.battery.get(robot_name)), flush=True)
             return self.battery[robot_name]/100
         else:
-            return 0.8
+            return None
     
     def requires_replan(self, robot_name: str):
         '''Return whether the robot needs RMF to replan'''
