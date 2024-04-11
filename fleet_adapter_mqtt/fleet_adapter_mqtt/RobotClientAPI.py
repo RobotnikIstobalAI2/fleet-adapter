@@ -229,7 +229,7 @@ class RobotAPI:
         #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
         if (distance < self.goal_dist):
             self.resultgoal[robot_name] = 0
-            print("Navigation completed! " +  robot_name, flush=True)
+            #print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
@@ -244,9 +244,10 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
-            print("Battery " + str(self.battery.get(robot_name)), flush=True)
+           #print("Battery " + str(self.battery.get(robot_name)), flush=True)
             return self.battery[robot_name]/100
         else:
+            #print("Battery none ", flush=True)
             return None
     
     def requires_replan(self, robot_name: str):

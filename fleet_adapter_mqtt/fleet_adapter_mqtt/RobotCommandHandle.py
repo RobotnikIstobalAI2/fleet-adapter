@@ -241,9 +241,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
             def _stop():
                 while not self._quit_stopping_event.is_set():
-                    self.node.get_logger().info(
-                        f"Requesting {self.name} to stop..."
-                    )
+                    # self.node.get_logger().info(
+                    #     f"Requesting {self.name} to stop..."
+                    # )
                     if self.api.stop(self.name, self.next_cmd_id()):
                         break
                     self._quit_stopping_event.wait(0.1)
@@ -272,14 +272,14 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
         if self.debug:
             plan_id = self.update_handle.unstable_current_plan_id()
-            print(f'follow_new_path for {self.name} with PlanId {plan_id}')
+            #print(f'follow_new_path for {self.name} with PlanId {plan_id}')
         self.interrupt()
         with self._lock:
             self._follow_path_thread = None
             self._quit_path_event.clear()
             self.clear()
 
-            self.node.get_logger().info(f"Received new path for {self.name}")
+            #self.node.get_logger().info(f"Received new path for {self.name}")
 
             wait, entries = self.filter_waypoints(waypoints)
 
@@ -302,9 +302,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     cmd_id = self.current_cmd_id
                     # Check if we need to abort
                     if self._quit_path_event.is_set():
-                        self.node.get_logger().info(
-                            f"[{self.name}] aborting path request"
-                        )
+                        # self.node.get_logger().info(
+                        #     f"[{self.name}] aborting path request"
+                        # )
                         return
                     # State machine
                     if self.state == RobotState.IDLE or target_pose is None:
@@ -347,10 +347,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         with self._lock:
                             if self.api.navigation_completed(
                                     self.name, cmd_id):
-                                self.node.get_logger().info(
-                                    f"Robot [{self.name}] has reached the "
-                                    f"destination for cmd_id {cmd_id}"
-                                )
+                                # self.node.get_logger().info(
+                                #     f"Robot [{self.name}] has reached the "
+                                #     f"destination for cmd_id {cmd_id}"
+                                # )
                                 self.state = RobotState.IDLE
                                 graph_index = self.target_waypoint.graph_index
                                 if graph_index is not None:
@@ -399,10 +399,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 if (not self.remaining_waypoints) \
                         and self.state == RobotState.IDLE:
                     path_finished_callback()
-                    self.node.get_logger().info(
-                        f"Robot {self.name} has successfully navigated along "
-                        f"requested path."
-                    )
+                    # self.node.get_logger().info(
+                    #     f"Robot {self.name} has successfully navigated along "
+                    #     f"requested path."
+                    # )
             self._follow_path_thread = threading.Thread(
                 target=_follow_path)
             self._follow_path_thread.start()
@@ -624,7 +624,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
-            print("Waypoints " + str(wps[i].position))
+            #print("Waypoints " + str(wps[i].position))
             waypoints.append(PlanWaypoint(i, wps[i]))
 
         # We assume the robot will backtack if the first waypoint in the plan
