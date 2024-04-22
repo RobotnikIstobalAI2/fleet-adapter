@@ -80,10 +80,11 @@ class RobotAPI:
     # requirements of their robot's API
     def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
                 pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
-                goal_dist: int, dispenser_topic: str, ingestor_topic: str):
+                goal_dist: int, dispenser_topic: str, ingestor_topic: str, start_ae_topic: str):
         #Delivery topic
         self.dispenser_topic = dispenser_topic
         self.ingestor_topic = ingestor_topic
+        self.start_ae_topic = start_ae_topic
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -228,7 +229,7 @@ class RobotAPI:
         #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
         if (distance < self.goal_dist):
             self.resultgoal[robot_name] = 0
-            print("Navigation completed! " +  robot_name, flush=True)
+            #print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
@@ -243,9 +244,11 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
+           #print("Battery " + str(self.battery.get(robot_name)), flush=True)
             return self.battery[robot_name]/100
         else:
-            return 0.8
+            #print("Battery none ", flush=True)
+            return None
     
     def requires_replan(self, robot_name: str):
         '''Return whether the robot needs RMF to replan'''
@@ -258,3 +261,8 @@ class RobotAPI:
     def pub_ingestor_requests(self, robot_name: str, task_id: str):
         data = { "data": task_id }
         self.client.publish(self.ingestor_topic + robot_name ,json.dumps(data), 2)
+    
+    def publish_action_execution(self, robot_name: str):
+        data = { "data": True }
+        self.client.publish(self.start_ae_topic + robot_name ,json.dumps(data), 2)
+

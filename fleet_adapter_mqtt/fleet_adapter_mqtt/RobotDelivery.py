@@ -77,7 +77,7 @@ class DeliveryTask(Node):
         for i in range(len(msg.active)):
             task = msg.active[i].task_id
             robot_name = msg.active[i].assignment.expected_robot_name
-            self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks) 
+            #self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks) 
             self.list_tasks[task] =  robot_name
 
     def _dispenser_request_cb(self, msg):

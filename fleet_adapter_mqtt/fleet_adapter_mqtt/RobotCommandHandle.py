@@ -26,9 +26,7 @@ import rmf_adapter as adpt
 import rmf_adapter.plan as plan
 import rmf_adapter.schedule as schedule
 
-from rmf_fleet_msgs.msg import DockSummary, ModeRequest
-
-from rmf_fleet_msgs.msg import DockSummary
+from rmf_fleet_msgs.msg import DockSummary, ModeRequest, RobotMode
 
 import numpy as np
 
@@ -37,6 +35,7 @@ import math
 import copy
 import enum
 import time
+import json
 
 from datetime import timedelta
 
@@ -73,7 +72,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                  update_frequency,
                  adapter,
                  api,
-                 lane_merge_distance):
+                 lane_merge_distance, 
+                 finish_ae_topic):
         adpt.RobotCommandHandle.__init__(self)
         self.debug = False
         self.name = name
@@ -85,7 +85,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.transforms = transforms
         self.map_name = map_name
         self.lane_merge_distance = lane_merge_distance
-        self.perform_filtering = True
+        self.finish_ae_topic = finish_ae_topic
+        self.perform_filtering = False
 
         # Get the index of the charger waypoint
         waypoint = self.graph.find_waypoint(charger_waypoint)
@@ -103,6 +104,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.dock_name = ""
         self.adapter = adapter
         self.action_execution = None
+        self.pub_action_execution = False
 
         self.requested_waypoints = []  # RMF Plan waypoints
         self.remaining_waypoints = []
@@ -163,6 +165,15 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             '/action_execution_notice',
             self.mode_request_cb,
             qos_profile=qos_profile_system_default)
+        
+        self.action_execution_pub = self.node.create_publisher(
+            ModeRequest,
+            '/action_execution_notice',
+            1
+        )
+        
+        self.api.client.message_callback_add(finish_ae_topic + self.name, self._finish_ae_cb)
+        self.api.client.subscribe(finish_ae_topic + self.name, 2)
 
         self.update_thread = threading.Thread(target=self.update)
         self.update_thread.start()
@@ -230,9 +241,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
             def _stop():
                 while not self._quit_stopping_event.is_set():
-                    self.node.get_logger().info(
-                        f"Requesting {self.name} to stop..."
-                    )
+                    # self.node.get_logger().info(
+                    #     f"Requesting {self.name} to stop..."
+                    # )
                     if self.api.stop(self.name, self.next_cmd_id()):
                         break
                     self._quit_stopping_event.wait(0.1)
@@ -261,14 +272,14 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
         if self.debug:
             plan_id = self.update_handle.unstable_current_plan_id()
-            print(f'follow_new_path for {self.name} with PlanId {plan_id}')
+            #print(f'follow_new_path for {self.name} with PlanId {plan_id}')
         self.interrupt()
         with self._lock:
             self._follow_path_thread = None
             self._quit_path_event.clear()
             self.clear()
 
-            self.node.get_logger().info(f"Received new path for {self.name}")
+            #self.node.get_logger().info(f"Received new path for {self.name}")
 
             wait, entries = self.filter_waypoints(waypoints)
 
@@ -291,9 +302,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     cmd_id = self.current_cmd_id
                     # Check if we need to abort
                     if self._quit_path_event.is_set():
-                        self.node.get_logger().info(
-                            f"[{self.name}] aborting path request"
-                        )
+                        # self.node.get_logger().info(
+                        #     f"[{self.name}] aborting path request"
+                        # )
                         return
                     # State machine
                     if self.state == RobotState.IDLE or target_pose is None:
@@ -336,10 +347,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         with self._lock:
                             if self.api.navigation_completed(
                                     self.name, cmd_id):
-                                self.node.get_logger().info(
-                                    f"Robot [{self.name}] has reached the "
-                                    f"destination for cmd_id {cmd_id}"
-                                )
+                                # self.node.get_logger().info(
+                                #     f"Robot [{self.name}] has reached the "
+                                #     f"destination for cmd_id {cmd_id}"
+                                # )
                                 self.state = RobotState.IDLE
                                 graph_index = self.target_waypoint.graph_index
                                 if graph_index is not None:
@@ -388,11 +399,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 if (not self.remaining_waypoints) \
                         and self.state == RobotState.IDLE:
                     path_finished_callback()
-                    self.node.get_logger().info(
-                        f"Robot {self.name} has successfully navigated along "
-                        f"requested path."
-                    )
-
+                    # self.node.get_logger().info(
+                    #     f"Robot {self.name} has successfully navigated along "
+                    #     f"requested path."
+                    # )
             self._follow_path_thread = threading.Thread(
                 target=_follow_path)
             self._follow_path_thread.start()
@@ -548,6 +558,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     self.position, self.dock_waypoint_index)
             # if robot is performing an action
             elif (self.action_execution is not None):
+                if self.pub_action_execution is False:
+                    self.api.publish_action_execution(self.name)
+                    self.pub_action_execution = True
                 print("Aqui podemos hacer algo", flush=True)
                 if not self.started_action:
                     self.started_action = True
@@ -611,7 +624,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
-            print("Waypoints " + str(wps[i].position))
+            #print("Waypoints " + str(wps[i].position))
             waypoints.append(PlanWaypoint(i, wps[i]))
 
         # We assume the robot will backtack if the first waypoint in the plan
@@ -636,7 +649,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         while (not changed and index < len(waypoints)):
             if (self.dist(last_pose,waypoints[index].position) < threshold):
                 first = waypoints[index]
-                print("Distance last pose and waypoints  " + str(first.position), flush=True)
+                #print("Distance last pose and waypoints  " + str(first.position), flush=True)
                 last_pose = waypoints[index].position
             else:
                 break
@@ -656,7 +669,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                 changed = True
                                 wp = waypoints[next_index]
                                 wp.approach_lanes = waypoints[parent_index].approach_lanes
-                                print("Distance waypoint next  " + str(wp.position), flush=True)
+                                #print("Distance waypoint next  " + str(wp.position), flush=True)
                                 second.append(wp)
                         else:
                             # append if next waypoint changes
@@ -677,8 +690,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             else:
                 index = index + 1
 
-        for i in range(len(second)):
-            print("Waypoints finales " + str(second[i].position), flush=True)
+        # for i in range(len(second)):
+        #     print("Waypoints finales " + str(second[i].position), flush=True)
         return (first, second)
 
     def complete_robot_action(self):
@@ -688,6 +701,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             self.action_execution.finished()
             self.action_execution = None
             self.started_action = False
+            self.pub_action_execution = False
             self.node.get_logger().info(f"Robot {self.name} has completed the"
                                         f" action it was performing")
 
@@ -699,8 +713,23 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
     def mode_request_cb(self, msg):
         if msg.fleet_name is None or msg.fleet_name != self.fleet_name or\
-                msg.robot_name is None:
+                msg.robot_name is None or msg.robot_name != self.name:
             print("Return request", flush=True)
             return
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
+
+    def _finish_ae_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        decoded_message=str(msg.payload.decode("utf-8"))
+        data = json.loads(decoded_message)['data']
+        print(data, flush=True)
+        print(self.name, flush=True)
+        print(robot_name,flush=True)
+        if (data is True) and (robot_name == self.name):
+            mode = RobotMode()
+            execution_notice = ModeRequest()
+            execution_notice.fleet_name = self.fleet_name
+            execution_notice.robot_name = self.name
+            execution_notice.mode.mode = RobotState.IDLE
+            self.action_execution_pub.publish(execution_notice)
