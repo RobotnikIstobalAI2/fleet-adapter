@@ -231,13 +231,15 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['fleet_manager']['distance'],
         fleet_config['delivery']['dispenser_req'],
         fleet_config['delivery']['ingestor_req'],
-        fleet_config['action_execution']['start'])
+        fleet_config['action_execution']['start'],
+        fleet_config['door']['request'])
 
     # Initialize robots for this fleet
 
     missing_robots = config_yaml['robots']
 
     finish_ae_topic = fleet_config['action_execution']['finish']
+    door_state_topic = fleet_config['door']['state']
 
     def _add_fleet_robots():
         robots = {}
@@ -304,7 +306,8 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                         adapter=adapter,
                         api=api,
                         lane_merge_distance=lane_merge_distance,
-                        finish_ae_topic=finish_ae_topic)
+                        finish_ae_topic=finish_ae_topic, 
+                        door_state_topic=door_state_topic)
 
                     if robot.initialized:
                         robots[robot_name] = robot

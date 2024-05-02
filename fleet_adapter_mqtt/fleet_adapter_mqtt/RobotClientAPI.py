@@ -80,11 +80,12 @@ class RobotAPI:
     # requirements of their robot's API
     def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
                 pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
-                goal_dist: int, dispenser_topic: str, ingestor_topic: str, start_ae_topic: str):
+                goal_dist: int, dispenser_topic: str, ingestor_topic: str, start_ae_topic: str, door_request_topic: str):
         #Delivery topic
         self.dispenser_topic = dispenser_topic
         self.ingestor_topic = ingestor_topic
         self.start_ae_topic = start_ae_topic
+        self.door_request_topic = door_request_topic
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -116,7 +117,7 @@ class RobotAPI:
                 print("Connected to MQTT Broker")
             else:
                 print("Failed to connect")
-        client = mqtt.Client('fleet-adapter')
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,'fleet-adapter')
         client.on_connect = on_connect
         client.message_callback_add(pose_topic, self.on_message_pose)
         client.message_callback_add(result_topic, self.on_message_result)
@@ -266,3 +267,6 @@ class RobotAPI:
         data = { "data": True }
         self.client.publish(self.start_ae_topic + robot_name ,json.dumps(data), 2)
 
+    def publish_door_request(self, door_name: str, requested_mode: str):
+        data = { "text": [door_name, requested_mode]}
+        self.client.publish(self.door_request_topic,json.dumps(data), 2)

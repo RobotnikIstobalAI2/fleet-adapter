@@ -27,6 +27,7 @@ import rmf_adapter.plan as plan
 import rmf_adapter.schedule as schedule
 
 from rmf_fleet_msgs.msg import DockSummary, ModeRequest, RobotMode
+from rmf_door_msgs.msg import DoorRequest, DoorState
 
 import numpy as np
 
@@ -73,7 +74,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                  adapter,
                  api,
                  lane_merge_distance, 
-                 finish_ae_topic):
+                 finish_ae_topic, 
+                 door_state_topic):
         adpt.RobotCommandHandle.__init__(self)
         self.debug = False
         self.name = name
@@ -86,6 +88,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.map_name = map_name
         self.lane_merge_distance = lane_merge_distance
         self.finish_ae_topic = finish_ae_topic
+        self.door_state_topic = door_state_topic
         self.perform_filtering = False
 
         # Get the index of the charger waypoint
@@ -166,14 +169,29 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             self.mode_request_cb,
             qos_profile=qos_profile_system_default)
         
+        self.node.create_subscription(
+            DoorRequest,
+            '/adapter_door_requests',
+            self.door_request_cb,
+            qos_profile=qos_profile_system_default)
+        
         self.action_execution_pub = self.node.create_publisher(
             ModeRequest,
             '/action_execution_notice',
             1
         )
+
+        self.door_state_pub = self.node.create_publisher(
+            DoorState,
+            '/door_states',
+            1
+        )
         
         self.api.client.message_callback_add(finish_ae_topic + self.name, self._finish_ae_cb)
         self.api.client.subscribe(finish_ae_topic + self.name, 2)
+
+        self.api.client.message_callback_add(door_state_topic, self.door_state_cb)
+        self.api.client.subscribe(door_state_topic, 2)
 
         self.update_thread = threading.Thread(target=self.update)
         self.update_thread.start()
@@ -283,7 +301,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
             wait, entries = self.filter_waypoints(waypoints)
 
-            self.remaining_waypoints = copy.copy(entries)           
+            self.remaining_waypoints = copy.copy(entries)
                  
             assert next_arrival_estimator is not None
             assert path_finished_callback is not None
@@ -342,7 +360,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
                         if self._quit_path_event.wait(0.1):
                             return
-
                         # Check if we have reached the target
                         with self._lock:
                             if self.api.navigation_completed(
@@ -641,6 +658,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 index = index + 1
 
         if (self.perform_filtering is False):
+            for i in range(len(waypoints)):
+                self.node.get_logger().info(f" [{self.name}] No filter waypoints {str(waypoints[i].position)}")
             return (first, waypoints)
 
         changed = False
@@ -691,7 +710,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 index = index + 1
 
         # for i in range(len(second)):
-        #     print("Waypoints finales " + str(second[i].position), flush=True)
+        #     self.node.get_logger().info(f" [{self.name}] Filter waypoints {str(second[i].position)}")
         return (first, second)
 
     def complete_robot_action(self):
@@ -718,6 +737,14 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             return
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
+    
+    def door_request_cb(self, msg):
+        door_name = msg.door_name
+        requested_mode = str(msg.requested_mode.value)
+        self.node.get_logger().info(f"Door name {door_name}")
+        self.node.get_logger().info(f"Door mode {requested_mode}")
+        self.api.publish_door_request(door_name, requested_mode)
+
 
     def _finish_ae_cb(self, client, userdata, msg):
         robot_name = msg.topic.split("/")[1]
@@ -733,3 +760,14 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             execution_notice.robot_name = self.name
             execution_notice.mode.mode = RobotState.IDLE
             self.action_execution_pub.publish(execution_notice)
+    
+    def door_state_cb(self, client, userdata, msg):
+        decoded_message = str(msg.payload.decode("utf-8"))
+        door_state_recv = json.loads(decoded_message)['text']
+        door_name = door_state_recv[0]
+        door_mode = door_state_recv[1]
+        print(door_name + " " + door_mode, flush=True)
+        door_state = DoorState()
+        door_state.door_name = door_name
+        door_state.current_mode.value = int(door_mode)
+        self.door_state_pub.publish(door_state)

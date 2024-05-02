@@ -42,6 +42,10 @@ COPY --chown=$USER_NAME \
   fleet_adapter_mqtt/  \
   $USER_WORKSPACE/src/fleet_adapter_mqtt
 
+COPY --chown=$USER_NAME \
+  door_adapter/  \
+  $USER_WORKSPACE/src/door_adapter
+
 RUN generate_debs.sh
 
 FROM  ${base_image}:${ros_distro}-base-${image_base_version} as base
