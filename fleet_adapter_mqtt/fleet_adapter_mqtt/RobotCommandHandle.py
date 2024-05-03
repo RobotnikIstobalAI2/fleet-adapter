@@ -738,6 +738,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
     
+    #When the rmf-core publishes to ROS2 in the /adapter_door_requests topic, 
+    #the information is published in MQTT for the door_node to receive it. 
     def door_request_cb(self, msg):
         door_name = msg.door_name
         requested_mode = str(msg.requested_mode.value)
@@ -760,7 +762,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             execution_notice.robot_name = self.name
             execution_notice.mode.mode = RobotState.IDLE
             self.action_execution_pub.publish(execution_notice)
-    
+    #When the door_node publishes to /door_state, from MQTT 
+    #this information is received and published in ROS2. 
+    #In the /door_states topic as well, but in the ROS2 topic of rmf-core
     def door_state_cb(self, client, userdata, msg):
         decoded_message = str(msg.payload.decode("utf-8"))
         door_state_recv = json.loads(decoded_message)['text']
