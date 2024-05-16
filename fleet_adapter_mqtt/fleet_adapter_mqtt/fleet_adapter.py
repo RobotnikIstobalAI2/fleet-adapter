@@ -301,6 +301,7 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                         start=starts[0],
                         position=position,
                         charger_waypoint=rmf_config['charger']['waypoint'],
+                        orientation_charger=rmf_config['charger']['orientation'],
                         update_frequency=rmf_config.get(
                             'robot_state_update_frequency', 1),
                         adapter=adapter,

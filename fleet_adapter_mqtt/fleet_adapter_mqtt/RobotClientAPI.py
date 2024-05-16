@@ -211,6 +211,7 @@ class RobotAPI:
                       cmd_id: int,
                       process: str,
                       map_name: str):
+        print(robot_name + " " + str(cmd_id) + " " + process + " " + map_name, flush=True)
         return True
     
     def navigation_remaining_duration(self, robot_name: str, cmd_id: int):
