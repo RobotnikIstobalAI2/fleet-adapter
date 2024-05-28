@@ -80,12 +80,15 @@ class RobotAPI:
     # requirements of their robot's API
     def __init__(self, broker: str, port: int, keep_alive: int, anonymous_access: bool, user: str, password: str, \
                 pose_topic: str, feedback_topic: str, result_topic: str, battery_topic: str, \
-                goal_dist: int, dispenser_topic: str, ingestor_topic: str, start_ae_topic: str, door_request_topic: str):
+                goal_dist: int, dispenser_topic: str, ingestor_topic: str, start_ae_topic: str, door_request_topic: str, \
+                dock_request_topic: str, undock_request_topic: str):
         #Delivery topic
         self.dispenser_topic = dispenser_topic
         self.ingestor_topic = ingestor_topic
         self.start_ae_topic = start_ae_topic
         self.door_request_topic = door_request_topic
+        self.dock_request_topic = dock_request_topic
+        self.undock_request_topic = undock_request_topic
         #Distance parameter
         self.goal_dist = goal_dist
         #Position information
@@ -271,3 +274,11 @@ class RobotAPI:
     def publish_door_request(self, door_name: str, requested_mode: str):
         data = { "text": [door_name, requested_mode]}
         self.client.publish(self.door_request_topic,json.dumps(data), 2)
+
+    def publish_dock_request(self, robot_name: str, data: bool):
+        data = { "data": data }
+        self.client.publish(self.dock_request_topic + robot_name ,json.dumps(data), 2)
+
+    def publish_undock_request(self, robot_name: str, data: bool):
+        data = { "data": data }
+        self.client.publish(self.undock_request_topic + robot_name ,json.dumps(data), 2)

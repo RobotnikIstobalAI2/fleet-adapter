@@ -76,7 +76,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                  api,
                  lane_merge_distance, 
                  finish_ae_topic, 
-                 door_state_topic):
+                 door_state_topic, 
+                 finish_dock_topic, 
+                 finish_undock_topic, 
+                 recharge_soc):
         adpt.RobotCommandHandle.__init__(self)
         self.debug = False
         self.name = name
@@ -90,8 +93,11 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.lane_merge_distance = lane_merge_distance
         self.finish_ae_topic = finish_ae_topic
         self.door_state_topic = door_state_topic
-        self.perform_filtering = False
+        self.finish_dock_topic = finish_dock_topic
+        self.finish_undock_topic = finish_undock_topic
+        self.perform_filtering = True
         self.orientation_charger = orientation_charger
+        self.recharge_soc = recharge_soc
 
         # Get the index of the charger waypoint
         waypoint = self.graph.find_waypoint(charger_waypoint)
@@ -143,6 +149,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.node.get_logger().info(
             f"The robot is starting at: [{self.position[0]:.2f}, "
             f"{self.position[1]:.2f}, {self.position[2]:.2f}]")
+        
+        # Dock variables
+        self.dock_finish = False
+        self.undock_finish  = False 
 
         # Update tracking variables
         if start.lane is not None:  # If the robot is on a lane
@@ -194,6 +204,12 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
         self.api.client.message_callback_add(door_state_topic, self.door_state_cb)
         self.api.client.subscribe(door_state_topic, 2)
+
+        self.api.client.message_callback_add(finish_dock_topic, self.finish_dock_cb)
+        self.api.client.subscribe(finish_dock_topic, 2)
+
+        self.api.client.message_callback_add(finish_undock_topic, self.finish_undock_cb)
+        self.api.client.subscribe(finish_undock_topic, 2)
 
         self.update_thread = threading.Thread(target=self.update)
         self.update_thread.start()
@@ -438,6 +454,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             cleaning process or load/unload a cart for delivery.
         '''
         print("Docking iniciado", flush=True)
+        self.battery = self.get_battery_soc()
         self.interrupt()
         with self._lock:
             self._quit_dock_event.clear()
@@ -512,10 +529,25 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                     self.last_known_waypoint_index
                             else:
                                 self.on_lane = None
-                                self.on_waypoint = None 
-                            
-            print("RUTINA DE DOCKING ROBOTNIK", flush=True)
+                                self.on_waypoint = None
+            #1. Publicar dock_request
+            self.api.publish_dock_request(self.name, True)
+            #2. Esperar dock_finish
+            while self.dock_finish == False:
+                self.node.get_logger().info(f"Esperando recibir dock finalizado")
+            #3. Mirar hasta que la batería supere soc 
+            while self.battery < self.recharge_soc:
+                self.node.get_logger().info(f"Esperando a que la bateria supere el recharge soc")
+                self.battery = self.get_battery_soc()
+            #4. Publicar undock_request
+            self.api.publish_undock_request(self.name, True)
+            #5. Esperar undock_finish
+            while self.undock_finish ==  False:
+                 self.node.get_logger().info(f"Esperando recibir undock finalizado") 
+                       
             with self._lock:
+                self.dock_finish = False
+                self.undock_finish = False
                 self.on_waypoint = self.dock_waypoint_index
                 self.dock_waypoint_index = None
                 docking_finished_callback()
@@ -644,13 +676,13 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         assert(len(B) > 1)
         return math.sqrt((A[0] - B[0])**2 + (A[1] - B[1])**2)
 
-    def filter_waypoints(self, wps:list, threshold = 1.0):
+    def filter_waypoints(self, wps:list, threshold = 0.5):
         ''' Return filtered PlanWaypoints'''
 
         assert(len(wps) > 0)
         first = None
         second = []
-        threshold = 1.0
+        threshold = 0.5
         last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
@@ -788,3 +820,12 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         door_state.door_name = door_name
         door_state.current_mode.value = int(door_mode)
         self.door_state_pub.publish(door_state)
+    
+    def finish_dock_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        if robot_name == self.name:
+            self.dock_finish = True
+    def finish_undock_cb(self, client, userdata, msg):
+        robot_name = msg.topic.split("/")[1]
+        if robot_name == self.name:
+            self.undock_finish = True

@@ -232,7 +232,9 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['delivery']['dispenser_req'],
         fleet_config['delivery']['ingestor_req'],
         fleet_config['action_execution']['start'],
-        fleet_config['door']['request'])
+        fleet_config['door']['request'],
+        fleet_config['dock']['request'],
+        fleet_config['undock']['request'])
 
     # Initialize robots for this fleet
 
@@ -240,6 +242,9 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     finish_ae_topic = fleet_config['action_execution']['finish']
     door_state_topic = fleet_config['door']['state']
+    finish_dock_topic = fleet_config['dock']['finish']
+    finish_undock_topic = fleet_config['undock']['finish']
+
 
     def _add_fleet_robots():
         robots = {}
@@ -308,7 +313,10 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                         api=api,
                         lane_merge_distance=lane_merge_distance,
                         finish_ae_topic=finish_ae_topic, 
-                        door_state_topic=door_state_topic)
+                        door_state_topic=door_state_topic, 
+                        finish_dock_topic=finish_dock_topic,
+                        finish_undock_topic=finish_undock_topic, 
+                        recharge_soc=recharge_soc)
 
                     if robot.initialized:
                         robots[robot_name] = robot
