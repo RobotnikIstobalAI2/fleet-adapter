@@ -351,7 +351,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                         [x, y] = self.transforms["rmf_to_robot"].transform(target_pose[:2])
                         theta = target_pose[2] + \
                         self.transforms['orientation_offset']
-                        print(str(x) + " " + str(y), flush=True)
+                        print(str(x) + " " + str(y) + " " + str(theta), flush=True)
                         response = self.api.navigate(
                             self.name,
                             self.next_cmd_id(),
@@ -489,8 +489,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 print("robot_moving", flush = True)
                 # Check if we have reached the target
                 with self._lock:
-                    if self.api.navigation_completed(
-                            self.name, cmd_id):
+                    print
+                    if self.api.navigation_completed(self.name, cmd_id) and self.api.position:
                         self.node.get_logger().info(
                             f"Robot [{self.name}] has reached the "
                             f"destination for cmd_id {cmd_id}"

@@ -231,10 +231,13 @@ class RobotAPI:
         ''' Return True if the robot has successfully completed its previous
             navigation request. Else False.'''
         distance = (math.sqrt((self.x_goal[robot_name]-self.x[robot_name])**2 + (self.y_goal[robot_name]-self.y[robot_name])**2))
+        print("Theta " + str(self.theta[robot_name]), flush=True)
+        print("Theta goal " +  str(self.theta_goal[robot_name]), flush=True)
+        print("Dif theta " + str(abs(self.theta[robot_name]-self.theta_goal[robot_name])), flush=True)
         #if (self.resultgoal.get(robot_name) is not None and self.resultgoal[robot_name] == 3):
-        if (distance < self.goal_dist):
+        if ((distance < self.goal_dist) and (abs(abs(self.theta[robot_name])-abs(self.theta_goal[robot_name]))) <= 0.05):
             self.resultgoal[robot_name] = 0
-            #print("Navigation completed! " +  robot_name, flush=True)
+            print("Navigation completed! " +  robot_name, flush=True)
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
