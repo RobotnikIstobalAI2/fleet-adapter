@@ -1,0 +1,12 @@
+---
+name: fleet-adapter
+include:
+  - path:
+      - ./compose/run.yaml
+    project_directory: .
+    env_file:
+      # - ./environment/compose/project-robotnik.env
+      - ./environment/compose/project-docker-hub.env
+      - ./environment/compose/version.env
+      # - ./environment/compose/registry-robotnik.env
+      - ./environment/compose/registry-docker-hub.env

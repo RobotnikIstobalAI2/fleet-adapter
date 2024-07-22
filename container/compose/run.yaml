@@ -1,0 +1,11 @@
+---
+x-env-adapter-config-files: &adapter-config-files_env ./environment/fleet_adapter/config_files.env
+
+name: fleet-adapter
+services:
+  fleet-adapter:
+    image: >-
+      ${REGISTRY_BASE}${REGISTRY_PROJECT}/${IMAGE_NAME}:${DOCKER_ROS_DISTRO}-${VERSION}
+    env_file:
+      - *adapter-config-files_env
+    network_mode: host
