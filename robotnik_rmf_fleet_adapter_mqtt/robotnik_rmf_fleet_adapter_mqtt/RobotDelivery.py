@@ -1,10 +1,17 @@
  # RobotDelivery.py
 #
-# @author Emima Jiva. (c) ai2-UPV Todos los derechos reservados.
+# @author Emima Jiva. <emji@ai2.upv.es>  ai2-UPV
+# @maintanier Guillem Gari  <ggari@robotnik.es> Robotnik Automation S.L.
+# @maintanier Sandra Moreno <smoreno@robotnik.es> Robotnik Automation S.L.
 #
-# Proyecto "WASHCARROB"
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
 # Version: 1.0
-# Rev: 2023. cambios introducidos 
+# Rev:
 
 import rmf_dispenser_msgs.msg as dispenser_msgs
 import rmf_ingestor_msgs.msg as ingestor_msgs
@@ -71,13 +78,13 @@ class DeliveryTask(Node):
             ingestor_msgs.IngestorResult,
             '/ingestor_results',
             1
-        )  
+        )
 
     def _dispatch_states_cb(self, msg):
         for i in range(len(msg.active)):
             task = msg.active[i].task_id
             robot_name = msg.active[i].assignment.expected_robot_name
-            #self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks) 
+            #self.get_logger().info('LIST_TASKS ACTIVE: "%s"' % self.list_tasks)
             self.list_tasks[task] =  robot_name
 
     def _dispenser_request_cb(self, msg):
@@ -87,7 +94,7 @@ class DeliveryTask(Node):
             if (self.state_task.get(robot_name) is None) or  self.state_task.get(robot_name) is not DISPENSER_REQUEST:
                 self.state_task[robot_name] = DISPENSER_REQUEST
                 self.api.pub_dispenser_requests(robot_name, task)
-    
+
     def _dispenser_results_cb(self, client, userdata, msg):
         robot_name = msg.topic.split("/")[1]
         self.get_logger().info('REQUEST_ID: "%s"' % robot_name)
@@ -120,6 +127,6 @@ class DeliveryTask(Node):
         result.request_guid = request_guid
         self.ingestor_pub.publish(result)
 
-    
+
 
 

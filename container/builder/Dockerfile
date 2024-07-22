@@ -56,10 +56,10 @@ USER root
 
 USER $USER_NAME
 
-#Copy fleet_adapter_mqtt
+#Copy robotnik_rmf_fleet_adapter_mqtt
 COPY --chown=$USER_NAME \
-  fleet_adapter_mqtt/  \
-  $USER_WORKSPACE/src/fleet_adapter_mqtt
+  robotnik_rmf_fleet_adapter_mqtt/  \
+  $USER_WORKSPACE/src/robotnik_rmf_fleet_adapter_mqtt
 
 #Copy door_adapter
 COPY --chown=$USER_NAME \
@@ -145,6 +145,6 @@ ENV GRAPH_CONFIG_FILE "${GRAPH_DIR}/0.yaml"
 
 ENV STARTUP_TYPE "run"
 # package to launch
-ENV ROS_BU_PKG "fleet_adapter_mqtt"
+ENV ROS_BU_PKG "robotnik_rmf_fleet_adapter_mqtt"
 # script of program to launch with all its arguments
 ENV ROS_BU_LAUNCH "fleet_adapter -c \${FLEET_CONFIG_FILE} -n \${GRAPH_CONFIG_FILE}"

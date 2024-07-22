@@ -1,10 +1,10 @@
 from setuptools import setup
 
-package_name = 'fleet_adapter_mqtt'
+package_name = 'robotnik_rmf_fleet_adapter_mqtt'
 
 setup(
     name=package_name,
-    version='0.2.0',
+    version='0.2.1',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'fleet_adapter=fleet_adapter_mqtt.fleet_adapter:main',
-            'dispatch_action=fleet_adapter_mqtt.dispatch_action:main'
+            'fleet_adapter=robotnik_rmf_fleet_adapter_mqtt.fleet_adapter:main',
+            'dispatch_action=robotnik_rmf_fleet_adapter_mqtt.dispatch_action:main'
         ],
     },
 )
