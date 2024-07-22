@@ -1,23 +1,21 @@
 # fleet-adapter
 
-Launch fleet-adapter.  This step adds new elements at the visualization that is started with rmf-core.
+The Fleet Adapter serves to connect the specific API of the Robotnik robotic fleet with the interfaces of the central RMF system, enabling the traffic negotiation. Consequently, it is responsible for managing communication between the fleet and the several interfaces of the OpenRMF infrastructure.
+
+Launch the `fleet-adapter` adds new elements at the visualization which is started with the `rmf-core`.
 
 ## Configuration
 
-The following environment variables are used on the docker image:
+The `environment` folder, located at `container/environment`, contains all the files with the environment variables used on the docker images.
+You can configure them.
 
-You can configure it throught the docker-compose file
+The ([adapter_config_files.env](./container/environment/fleet_adapter/adapter_config_files.env)) contains the following configurable environment variables:
 
-```yaml
----
-name: fleet-adapter
-services:
-  adapter:
-    image: fleet-adapter:${ROS_DISTRO}-${VERSION}
-    environment:
-      FLEET_CONFIG_FILE: /home/robot/config/config_robotnik_fleet.yaml
-      GRAPH_CONFIG_FILE: /home/robot/graph/0.yaml
-```
+| Environment         | Default Value                                   | Meaning                                         |
+| ------------------- | ----------------------------------------------- | ----------------------------------------------- |
+| `FLEET_CONFIG_FILE` | `/home/robot/config/config_robotnik_fleet.yaml` | Path to the fleet configuration file            |
+| `GRAPH_CONFIG_FILE` | `/home/robot/graph/0.yaml`                      | Path to the navigation graph configuration file |
+
 
 ## Image build
 
@@ -33,7 +31,7 @@ cd ..
 ## Launch docker with fleet-adapter
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
 <p align="center">
