@@ -1,5 +1,5 @@
 ---
-x-env-adapter-config-files: &adapter-config-files_env ./environment/fleet_adapter/config_files.env
+x-env-adapter-config-files: &adapter-config-files_env ./environment/fleet_adapter/adapter_config_files.env
 
 name: fleet-adapter
 services:
