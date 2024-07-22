@@ -4,12 +4,34 @@
 
 ### Added
 - Added dispatch action package
+- Added door adapter package
+- Added use of ros mirror if it's reachable
+- Added `container/compose` folder with compose files.
+- Added `container/environment` folder with the environment variables.
+- Added the following environment variables in `container/environment/compose`:
+    - `IMAGE_BASE_VERSION` to modify the default image base version for building the container.
+    - `IMAGE_NAME` to change default value of image name for building the container.
+    - `REGISTRY_PROJECT` to change default value of registry project for building the container (using a private `project-robotnik` or public `project-docker-hub` registry project).
+    - `BUILDER_TYPE` to override or not git code with local changes.
+    - `ROS_MIRROR` is a ros apt mirror to increase the download speed.
+    - `REGISTRY_BASE` to change default value of registry base name for downloading images without local building.
+    - `DOCKER_ROS_DISTRO` to specify the ROS distribution of the container.
+    - `VERSION` to indicate the repository version (branch or tag).
 
 ### Changed
 - Changed to robotnik public `robotnik/ros:humble-base-0.5.0` ros images as docker image base.
 - Changed to robotnik public `robotnik/ros:humble-builder-0.5.0` ros images as package builder intermediate image.
-- Use of docker compose environment file `.env` for unified variables
-- Use of `apt-fast` for parallel downloading for apt
+- Use of `apt-fast` for parallel downloading for apt in the `Dockerfile`.
+- Use of docker compose environment files for unified variables.
+- New docker compose structure with, include, override and merge features (consult docker compose documention for futher information).
+    - Compose files with content are located in `container/compose`, environment variables for the docker compose splitted and assigned to included.
+    - Use yaml of anchors and links to avoid redefinition in the same file.
+    - Refactor from `docker-compose.yaml` to `compose.yaml` to future compatibility with podman.
+    - Environment variables are located in `container/environment`.
+
+### Fixed
+- Refactor from ci.yaml (continuous integration) to cd.yaml (continuous delivery)
+
 
 ## [0.2.0] - 2023-12-04
 
