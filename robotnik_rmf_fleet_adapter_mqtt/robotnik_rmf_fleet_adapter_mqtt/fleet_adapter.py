@@ -147,7 +147,7 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
 
     fleet_handle.accept_task_requests(
         partial(_task_request_check, task_capabilities))
-    
+
     def _consider(description: dict):
         confirm = adpt.fleet_update_handle.Confirmation()
         confirm.accept()
@@ -234,7 +234,9 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
         fleet_config['action_execution']['start'],
         fleet_config['door']['request'],
         fleet_config['dock']['request'],
-        fleet_config['undock']['request'])
+        fleet_config['undock']['request'],
+        node.get_logger(),
+    )
 
     # Initialize robots for this fleet
 
@@ -312,10 +314,10 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
                         adapter=adapter,
                         api=api,
                         lane_merge_distance=lane_merge_distance,
-                        finish_ae_topic=finish_ae_topic, 
-                        door_state_topic=door_state_topic, 
+                        finish_ae_topic=finish_ae_topic,
+                        door_state_topic=door_state_topic,
                         finish_dock_topic=finish_dock_topic,
-                        finish_undock_topic=finish_undock_topic, 
+                        finish_undock_topic=finish_undock_topic,
                         recharge_soc=recharge_soc)
 
                     if robot.initialized:

@@ -11,6 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# @author Emima Jiva. <emji@ai2.upv.es>  ai2-UPV
+# @maintanier Guillem Gari  <ggari@robotnik.es> Robotnik Automation S.L.
+# @maintanier Sandra Moreno <smoreno@robotnik.es> Robotnik Automation S.L.
 
 import rclpy
 import rclpy.node
@@ -74,11 +78,11 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                  update_frequency,
                  adapter,
                  api,
-                 lane_merge_distance, 
-                 finish_ae_topic, 
-                 door_state_topic, 
-                 finish_dock_topic, 
-                 finish_undock_topic, 
+                 lane_merge_distance,
+                 finish_ae_topic,
+                 door_state_topic,
+                 finish_dock_topic,
+                 finish_undock_topic,
                  recharge_soc):
         adpt.RobotCommandHandle.__init__(self)
         self.debug = False
@@ -149,10 +153,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.node.get_logger().info(
             f"The robot is starting at: [{self.position[0]:.2f}, "
             f"{self.position[1]:.2f}, {self.position[2]:.2f}]")
-        
+
         # Dock variables
         self.dock_finish = False
-        self.undock_finish  = False 
+        self.undock_finish  = False
 
         # Update tracking variables
         if start.lane is not None:  # If the robot is on a lane
@@ -168,7 +172,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             depth=1,
             reliability=Reliability.RELIABLE,
             durability=Durability.TRANSIENT_LOCAL)
-        
+
         self.node.create_subscription(
             DockSummary,
             'dock_summary',
@@ -180,13 +184,13 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             '/action_execution_notice',
             self.mode_request_cb,
             qos_profile=qos_profile_system_default)
-        
+
         self.node.create_subscription(
             DoorRequest,
             '/adapter_door_requests',
             self.door_request_cb,
             qos_profile=qos_profile_system_default)
-        
+
         self.action_execution_pub = self.node.create_publisher(
             ModeRequest,
             '/action_execution_notice',
@@ -198,7 +202,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             '/door_states',
             1
         )
-        
+
         self.api.client.message_callback_add(finish_ae_topic + self.name, self._finish_ae_cb)
         self.api.client.subscribe(finish_ae_topic + self.name, 2)
 
@@ -236,7 +240,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             if event.wait(0.001):
                 return True
         return False
-    
+
 
     def clear(self):
         self.requested_waypoints = []
@@ -319,7 +323,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             wait, entries = self.filter_waypoints(waypoints)
 
             self.remaining_waypoints = copy.copy(entries)
-                 
+
             assert next_arrival_estimator is not None
             assert path_finished_callback is not None
 
@@ -535,7 +539,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             #2. Esperar dock_finish
             while self.dock_finish == False:
                 self.node.get_logger().info(f"Esperando recibir dock finalizado")
-            #3. Mirar hasta que la batería supere soc 
+            #3. Mirar hasta que la batería supere soc
             while self.battery < self.recharge_soc:
                 self.node.get_logger().info(f"Esperando a que la bateria supere el recharge soc")
                 self.battery = self.get_battery_soc()
@@ -543,8 +547,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             self.api.publish_undock_request(self.name, True)
             #5. Esperar undock_finish
             while self.undock_finish ==  False:
-                 self.node.get_logger().info(f"Esperando recibir undock finalizado") 
-                       
+                 self.node.get_logger().info(f"Esperando recibir undock finalizado")
+
             with self._lock:
                 self.dock_finish = False
                 self.undock_finish = False
@@ -782,9 +786,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             return
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
-    
-    #When the rmf-core publishes to ROS2 in the /adapter_door_requests topic, 
-    #the information is published in MQTT for the door_node to receive it. 
+
+    #When the rmf-core publishes to ROS2 in the /adapter_door_requests topic,
+    #the information is published in MQTT for the door_node to receive it.
     def door_request_cb(self, msg):
         door_name = msg.door_name
         requested_mode = str(msg.requested_mode.value)
@@ -807,8 +811,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             execution_notice.robot_name = self.name
             execution_notice.mode.mode = RobotState.IDLE
             self.action_execution_pub.publish(execution_notice)
-    #When the door_node publishes to /door_state, from MQTT 
-    #this information is received and published in ROS2. 
+    #When the door_node publishes to /door_state, from MQTT
+    #this information is received and published in ROS2.
     #In the /door_states topic as well, but in the ROS2 topic of rmf-core
     def door_state_cb(self, client, userdata, msg):
         decoded_message = str(msg.payload.decode("utf-8"))
@@ -820,7 +824,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         door_state.door_name = door_name
         door_state.current_mode.value = int(door_mode)
         self.door_state_pub.publish(door_state)
-    
+
     def finish_dock_cb(self, client, userdata, msg):
         robot_name = msg.topic.split("/")[1]
         if robot_name == self.name:
