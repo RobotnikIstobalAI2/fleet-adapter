@@ -232,7 +232,6 @@ class RobotAPI:
         for attempt in range(max_retries):
             try:
                 self.print("trying to connect to MQTT broker")
-                self._logger.info("trying to connect to MQTT broker")
                 client.connect(broker, port, keep_alive)
                 break
             except ConnectionRefusedError:
