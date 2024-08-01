@@ -130,12 +130,13 @@ class RobotAPI:
         client.message_callback_add(result_topic, self.on_message_result)
         client.message_callback_add(feedback_topic, self.on_message_feedback)
         client.message_callback_add(battery_topic, self.on_message_battery)
-        max_retries = 10
+        max_retries = 12
         retry_delay = 5
         if not anonymous_access:
             client.username_pw_set(user, password)
         for attempt in range(max_retries):
             try:
+                print("trying to connect to MQTT broker")
                 client.connect(broker, port, keep_alive)
                 break
             except ConnectionRefusedError:
