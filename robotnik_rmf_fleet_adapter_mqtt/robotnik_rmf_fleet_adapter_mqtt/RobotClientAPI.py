@@ -14,7 +14,13 @@
 
 # RobotClientAPI.py
 #
-# @author Emima Jiva. (c) ai2-UPV
+# @author Emima Jiva. <emji@ai2.upv.es>  ai2-UPV
+# @maintanier Guillem Gari  <ggari@robotnik.es> Robotnik Automation S.L.
+# @maintanier Sandra Moreno <smoreno@robotnik.es> Robotnik Automation S.L.
+#
+#
+# Version: 1.0
+# Rev:
 #
 # Proyecto "WASHCARROB"
 # Version: 1.0
