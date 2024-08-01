@@ -26,6 +26,10 @@ import math
 import numpy as np
 import time
 
+class MaxRetriesExceededError(Exception):
+    """Raised when the maximum number of connection retries is exceeded."""
+    pass
+
 def quaternion_from_euler(roll, pitch, yaw):
     """
     Convert an Euler angle to a quaternion.
@@ -126,22 +130,40 @@ class RobotAPI:
         client.message_callback_add(result_topic, self.on_message_result)
         client.message_callback_add(feedback_topic, self.on_message_feedback)
         client.message_callback_add(battery_topic, self.on_message_battery)
+        max_retries = 10
+        retry_delay = 5
         if not anonymous_access:
             client.username_pw_set(user, password)
-        client.connect(broker, port, keep_alive)
+        for attempt in range(max_retries):
+            try:
+                client.connect(broker, port, keep_alive)
+                break
+            except ConnectionRefusedError:
+                # Check if it's not the last attempt
+                if attempt < max_retries - 1:
+                    print(
+                        f"Connection refused. Retrying in {retry_delay}"
+                        f" seconds... (Attempt {attempt + 1}/{max_retries})"
+                    )
+                    time.sleep(retry_delay)
+                else:
+                    print(f"Connection failed after {max_retries} attempts.")
+                    raise MaxRetriesExceededError(
+                        f"Failed to connect after {max_retries} attempts"
+                    )
         client.subscribe(pose_topic, 2)
         client.subscribe(result_topic, 2)
         client.subscribe(feedback_topic, 2)
         client.subscribe(battery_topic, 2)
         return client
-    
+
     def on_message_pose(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         pose=json.loads(decoded_message)['pose']['pose']
         robot = msg.topic.split("/")[1]
         self.robotpose[robot] = pose
         self.robots[robot] = robot
-    
+
     def on_message_result(self, client, userdata, msg):
         decoded_message=str(msg.payload.decode("utf-8"))
         result=json.loads(decoded_message)['status']['status']
@@ -174,7 +196,7 @@ class RobotAPI:
             print("No position for " + robot_name)
             return None
 
- 
+
     def navigate(self,
                  robot_name: str,
                  cmd_id: int,
@@ -216,10 +238,10 @@ class RobotAPI:
                       map_name: str):
         print(robot_name + " " + str(cmd_id) + " " + process + " " + map_name, flush=True)
         return True
-    
+
     def navigation_remaining_duration(self, robot_name: str, cmd_id: int):
         return 0.0
-    
+
     def stop(self, robot_name: str, cmd_id: int):
         ''' Command the robot to stop.
             Return True if robot has successfully stopped. Else False'''
@@ -241,13 +263,13 @@ class RobotAPI:
             return True
         else:
             #print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
-            return False 
-        
+            return False
+
     def process_completed(self, robot_name: str, cmd_id: int):
         ''' Return True if the robot has successfully completed its previous
             process request. Else False.'''
         return self.navigation_completed(robot_name, cmd_id)
-    
+
     def battery_soc(self, robot_name: str):
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
@@ -257,11 +279,11 @@ class RobotAPI:
         else:
             #print("Battery none ", flush=True)
             return None
-    
+
     def requires_replan(self, robot_name: str):
         '''Return whether the robot needs RMF to replan'''
         return False
-        
+
     def pub_dispenser_requests(self, robot_name: str, task_id: str):
         data = { "data": task_id }
         self.client.publish(robot_name + self.dispenser_topic ,json.dumps(data), 2)
@@ -269,7 +291,7 @@ class RobotAPI:
     def pub_ingestor_requests(self, robot_name: str, task_id: str):
         data = { "data": task_id }
         self.client.publish(self.ingestor_topic + robot_name ,json.dumps(data), 2)
-    
+
     def publish_action_execution(self, robot_name: str):
         data = { "data": True }
         self.client.publish(self.start_ae_topic + robot_name ,json.dumps(data), 2)
