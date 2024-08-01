@@ -50,10 +50,34 @@ def quaternion_from_euler(roll, pitch, yaw):
     Output
     :return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
     """
-    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qx = \
+        np.sin(roll / 2) * \
+        np.cos(pitch / 2) * \
+        np.cos(yaw / 2) - \
+        np.cos(roll / 2) * \
+        np.sin(pitch / 2) * \
+        np.sin(yaw / 2)
+    qy = \
+        np.cos(roll / 2) * \
+        np.sin(pitch / 2) * \
+        np.cos(yaw / 2) + \
+        np.sin(roll / 2) * \
+        np.cos(pitch / 2) * \
+        np.sin(yaw / 2)
+    qz = \
+        np.cos(roll / 2) * \
+        np.cos(pitch / 2) * \
+        np.sin(yaw / 2) - \
+        np.sin(roll / 2) * \
+        np.sin(pitch / 2) * \
+        np.cos(yaw / 2)
+    qw = \
+        np.cos(roll / 2) * \
+        np.cos(pitch / 2) * \
+        np.cos(yaw / 2) + \
+        np.sin(roll / 2) * \
+        np.sin(pitch / 2) * \
+        np.sin(yaw / 2)
     return [qx, qy, qz, qw]
 
 
@@ -111,7 +135,8 @@ class RobotAPI:
         start_ae_topic: str,
         door_request_topic: str,
         dock_request_topic: str,
-        undock_request_topic: str
+        undock_request_topic: str,
+        logger,
     ):
         # Delivery topic
         self.dispenser_topic = dispenser_topic
@@ -139,6 +164,8 @@ class RobotAPI:
         self.feedback = {}
         # A dict with existing robots
         self.robots = {}
+        # self ros logger
+        self._logger = logger
         # MQTT Connection
         self.client = self.connect_mqtt(
             broker,
@@ -153,6 +180,23 @@ class RobotAPI:
             battery_topic
         )
         self.client.loop_start()
+
+    def print(
+        self,
+        string,
+        debug_level='INFO'
+    ):
+        print(string)
+        if debug_level == "INFO":
+            self._logger.info(string)
+        if debug_level == "DEBUG":
+            self._logger.debug(string)
+        if debug_level == "WARN":
+            self._logger.warn(string)
+        if debug_level == "ERROR":
+            self._logger.error(string)
+        if debug_level == "FATAL":
+            self._logger.fatal(string)
 
     def connect_mqtt(
         self,
@@ -169,9 +213,9 @@ class RobotAPI:
     ):
         def on_connect(client, userdate, flags, rc):
             if rc == 0:
-                print("Connected to MQTT Broker")
+                self.print("Connected to MQTT Broker")
             else:
-                print("Failed to connect")
+                self.print("Failed to connect")
         client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION1,
             'fleet-adapter'
@@ -187,19 +231,24 @@ class RobotAPI:
             client.username_pw_set(user, password)
         for attempt in range(max_retries):
             try:
-                print("trying to connect to MQTT broker")
+                self.print("trying to connect to MQTT broker")
+                self._logger.info("trying to connect to MQTT broker")
                 client.connect(broker, port, keep_alive)
                 break
             except ConnectionRefusedError:
                 # Check if it's not the last attempt
                 if attempt < max_retries - 1:
-                    print(
+                    self.print(
                         f"Connection refused. Retrying in {retry_delay}"
-                        f" seconds... (Attempt {attempt + 1}/{max_retries})"
+                        f" seconds... (Attempt {attempt + 1}/{max_retries})",
+                        "WARN"
                     )
                     time.sleep(retry_delay)
                 else:
-                    print(f"Connection failed after {max_retries} attempts.")
+                    self.print(
+                        f"Connection failed after {max_retries} attempts.",
+                        "ERROR"
+                    )
                     raise MaxRetriesExceededError(
                         f"Failed to connect after {max_retries} attempts"
                     )
@@ -261,7 +310,7 @@ class RobotAPI:
                 self.theta[robot_name]
             ]
         else:
-            print("No position for " + robot_name)
+            self.print("No position for " + robot_name)
             return None
 
     def navigate(
@@ -316,7 +365,7 @@ class RobotAPI:
                       cmd_id: int,
                       process: str,
                       map_name: str):
-        print(
+        self.print(
             robot_name + " " + str(cmd_id) + " " + process + " " + map_name,
             flush=True
         )
@@ -348,9 +397,9 @@ class RobotAPI:
                 )**2
             )
         )
-        print("Theta " + str(self.theta[robot_name]), flush=True)
-        print("Theta goal " + str(self.theta_goal[robot_name]), flush=True)
-        print(
+        self.print("Theta " + str(self.theta[robot_name]), flush=True)
+        self.print("Theta goal " + str(self.theta_goal[robot_name]), flush=True)
+        self.print(
             "Dif theta " + str(
                 abs(
                     self.theta[robot_name] - self.theta_goal[robot_name]
@@ -374,10 +423,10 @@ class RobotAPI:
             ) <= 0.05
         ):
             self.resultgoal[robot_name] = 0
-            print("Navigation completed! " + robot_name, flush=True)
+            self.print("Navigation completed! " + robot_name, flush=True)
             return True
         else:
-            # print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
+            # self.print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
             return False
 
     def process_completed(self, robot_name: str, cmd_id: int):
@@ -389,10 +438,10 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
-            # print("Battery " + str(self.battery.get(robot_name)), flush=True)
+            # self.print("Battery " + str(self.battery.get(robot_name)), flush=True)
             return self.battery[robot_name] / 100
         else:
-            # print("Battery none ", flush=True)
+            # self.print("Battery none ", flush=True)
             return None
 
     def requires_replan(self, robot_name: str):
