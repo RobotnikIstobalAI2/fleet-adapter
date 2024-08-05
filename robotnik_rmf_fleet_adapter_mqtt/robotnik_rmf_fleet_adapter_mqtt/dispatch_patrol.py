@@ -39,23 +39,50 @@ class TaskRequester(Node):
     def __init__(self, argv=sys.argv):
         super().__init__('task_requester')
         parser = argparse.ArgumentParser()
-        parser.add_argument('-p', '--places', required=True, nargs='+',
-                            type=str, help='Places to patrol through')
-        parser.add_argument('-n', '--rounds',
-                            help='Number of loops to perform',
-                            type=int, default=1)
-        parser.add_argument('-F', '--fleet', type=str,
-                            help='Fleet name, should define tgt with robot')
-        parser.add_argument('-R', '--robot', type=str,
-                            help='Robot name, should define tgt with fleet')
-        parser.add_argument('-st', '--start_time',
-                            help='Start time from now in secs, default: 0',
-                            type=int, default=0)
-        parser.add_argument('-pt', '--priority',
-                            help='Priority value for this request',
-                            type=int, default=0)
-        parser.add_argument("--use_sim_time", action="store_true",
-                            help='Use sim time, default: false')
+        parser.add_argument(
+            '-p',
+            '--places',
+            required=True,
+            nargs='+',
+            type=str,
+            help='Places to patrol through'
+        )
+        parser.add_argument(
+            '-n',
+            '--rounds',
+            default=1,
+            type=int,
+            help='Number of loops to perform',
+        )
+        parser.add_argument(
+            '-F',
+            '--fleet',
+            type=str,
+            help='Fleet name, should define tgt with robot'
+        )
+        parser.add_argument(
+            '-R',
+            '--robot',
+            type=str,
+            help='Robot name, should define tgt with fleet'
+        )
+        parser.add_argument(
+            '-st',
+            '--start_time',
+            default=0,
+            type=int,
+            help='Start time from now in secs, default: 0'
+        )
+        parser.add_argument(
+            '-pt', '--priority',
+            help='Priority value for this request',
+            type=int,
+            default=0,
+        )
+        parser.add_argument(
+            "--use_sim_time", action="store_true",
+            help='Use sim time, default: false'
+        )
 
         self.args = parser.parse_args(argv[1:])
         self.response = asyncio.Future()
@@ -66,7 +93,9 @@ class TaskRequester(Node):
             reliability=Reliability.RELIABLE,
             durability=Durability.TRANSIENT_LOCAL)
         self.pub = self.create_publisher(
-          ApiRequest, 'task_api_requests', transient_qos
+            ApiRequest,
+            'task_api_requests',
+            transient_qos
         )
 
         # enable ros sim time
@@ -94,7 +123,7 @@ class TaskRequester(Node):
         # Set task request start time
         now = self.get_clock().now().to_msg()
         now.sec = now.sec + self.args.start_time
-        start_time = now.sec * 1000 + round(now.nanosec/10**6)
+        start_time = now.sec * 1000 + round(now.nanosec / 10**6)
         request["unix_millis_earliest_start_time"] = start_time
         # todo(YV): Fill priority after schema is added
 
@@ -119,7 +148,9 @@ class TaskRequester(Node):
             ApiResponse, 'task_api_responses', receive_response, transient_qos
         )
 
-        print(f"Json msg payload: \n{json.dumps(payload, indent=2)}")
+        self.get_logger().info(
+            f"Json msg payload: \n{json.dumps(payload, indent=2)}"
+        )
         self.pub.publish(msg)
 
 

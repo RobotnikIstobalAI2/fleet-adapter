@@ -22,7 +22,7 @@ import datetime
 
 import rclpy
 import rclpy.node
-from   rclpy.parameter import Parameter
+from rclpy.parameter import Parameter
 
 import rmf_adapter as adpt
 import rmf_adapter.vehicletraits as traits
@@ -44,12 +44,23 @@ from .RobotDelivery import DeliveryTask
 # ------------------------------------------------------------------------------
 
 
-def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri):
+def initialize_fleet(
+    config_yaml,
+    nav_graph_path,
+    node,
+    use_sim_time,
+    server_uri
+):
     # Profile and traits
     fleet_config = config_yaml['rmf_fleet']
-    profile = traits.Profile(geometry.make_final_convex_circle(
-        fleet_config['profile']['footprint']),
-        geometry.make_final_convex_circle(fleet_config['profile']['vicinity']))
+    profile = traits.Profile(
+        geometry.make_final_convex_circle(
+            fleet_config['profile']['footprint']
+        ),
+        geometry.make_final_convex_circle(
+            fleet_config['profile']['vicinity']
+        )
+    )
     vehicle_traits = traits.VehicleTraits(
         linear=traits.Limits(*fleet_config['limits']['linear']),
         angular=traits.Limits(*fleet_config['limits']['angular']),
@@ -93,14 +104,22 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
     adapter.start()
     time.sleep(1.0)
 
-    fleet_handle = adapter.add_fleet(fleet_name, vehicle_traits, nav_graph, server_uri)
+    fleet_handle = adapter.add_fleet(
+        fleet_name,
+        vehicle_traits,
+        nav_graph,
+        server_uri
+    )
 
     if not fleet_config['publish_fleet_state']:
         fleet_handle.fleet_state_publish_period(None)
     else:
         fleet_state_update_frequency = fleet_config['publish_fleet_state']
         fleet_handle.fleet_state_publish_period(
-        datetime.timedelta(seconds=1.0/fleet_state_update_frequency))
+            datetime.timedelta(
+                seconds=1.0 / fleet_state_update_frequency
+            )
+        )
 
     task_capabilities_config = fleet_config['task_capabilities']
 
@@ -208,8 +227,10 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
             cmd_handle.node.get_logger().info(
                 f"Setting max delay to {max_delay}s")
             cmd_handle.update_handle.set_maximum_delay(max_delay)
-        if (cmd_handle.charger_waypoint_index <
-                cmd_handle.graph.num_waypoints):
+        if (
+            cmd_handle.charger_waypoint_index
+            < cmd_handle.graph.num_waypoints
+        ):
             cmd_handle.update_handle.set_charger_waypoint(
                 cmd_handle.charger_waypoint_index)
         else:
@@ -246,7 +267,6 @@ def initialize_fleet(config_yaml, nav_graph_path, node, use_sim_time, server_uri
     door_state_topic = fleet_config['door']['state']
     finish_dock_topic = fleet_config['dock']['finish']
     finish_undock_topic = fleet_config['undock']['finish']
-
 
     def _add_fleet_robots():
         robots = {}
@@ -361,14 +381,33 @@ def main(argv=sys.argv):
     parser = argparse.ArgumentParser(
         prog="fleet_adapter",
         description="Configure and spin up the fleet adapter")
-    parser.add_argument("-c", "--config_file", type=str, required=True,
-                        help="Path to the config.yaml file")
-    parser.add_argument("-n", "--nav_graph", type=str, required=True,
-                        help="Path to the nav_graph for this fleet adapter")
-    parser.add_argument("-s", "--server_uri", type=str, required=False, default="",
-                    help="URI of the api server to transmit state and task information.")
-    parser.add_argument("--use_sim_time", action="store_true",
-                        help='Use sim time, default: false')
+    parser.add_argument(
+        "-c",
+        "--config_file",
+        type=str,
+        required=True,
+        help="Path to the config.yaml file"
+    )
+    parser.add_argument(
+        "-n",
+        "--nav_graph",
+        type=str,
+        required=True,
+        help="Path to the nav_graph for this fleet adapter"
+    )
+    parser.add_argument(
+        "-s",
+        "--server_uri",
+        type=str,
+        required=False,
+        default="",
+        help="URI of the api server to transmit state and task information."
+    )
+    parser.add_argument(
+        "--use_sim_time",
+        action="store_true",
+        help='Use sim time, default: false'
+    )
     args = parser.parse_args(args_without_ros[1:])
     print(f"Starting fleet adapter...")
 
@@ -402,8 +441,13 @@ def main(argv=sys.argv):
 
     dis_res_topic = config_yaml['rmf_fleet']['delivery']['dispenser_res']
     ing_res_topic = config_yaml['rmf_fleet']['delivery']['ingestor_res']
-    #Init delivery
-    delivery_task = DeliveryTask("delivery_task", api, dis_res_topic, ing_res_topic)
+    # Init delivery
+    delivery_task = DeliveryTask(
+        "delivery_task",
+        api,
+        dis_res_topic,
+        ing_res_topic
+    )
     # Create executor for the command handle node
     rclpy_executor = rclpy.executors.SingleThreadedExecutor()
     rclpy_executor.add_node(node)

@@ -40,32 +40,80 @@ class TaskRequester(Node):
     def __init__(self, argv=sys.argv):
         super().__init__('task_requester')
         parser = argparse.ArgumentParser()
-        parser.add_argument('-s', '--starts', default=[],
-                            type=str, nargs='+', help='Action start waypoints')
-        parser.add_argument('-stop', '--stop', default=[],
-                            type=str, nargs='+', help='Action stop waypoints')       
-        parser.add_argument('-st', '--start_time',
-                            help='Start time from now in secs, default: 0',
-                            type=int, default=0)
-        parser.add_argument('-pt', '--priority',
-                            help='Priority value for this request',
-                            type=int, default=0)
-        parser.add_argument('-a', '--action', required=True,
-                            type=str, help='action name')
-        parser.add_argument('-ad', '--action_desc', required=False,
-                            default='{}',
-                            type=str, help='action description in json str')
-        parser.add_argument('-F', '--fleet', type=str,
-                            help='Fleet name, should define tgt with robot')
-        parser.add_argument('-R', '--robot', type=str,
-                            help='Robot name, should define tgt with fleet')
-        parser.add_argument("--use_sim_time", action="store_true",
-                            help='Use sim time, default: false')
-        parser.add_argument("--use_tool_sink", action="store_true",
-                            help='Use tool sink during perform action, \
-                                default: false')
-        parser.add_argument('-o', '--orientation', required=False, type=float,
-                            help='Orientation to face in degrees (optional)'
+        parser.add_argument(
+            '-s',
+            '--starts',
+            default=[],
+            type=str,
+            nargs='+',
+            help='Action start waypoints'
+        )
+        parser.add_argument(
+            '-stop',
+            '--stop',
+            default=[],
+            type=str,
+            nargs='+',
+            help='Action stop waypoints'
+        )
+        parser.add_argument(
+            '-st',
+            '--start_time',
+            default=0,
+            type=int,
+            help='Start time from now in secs, default: 0'
+        )
+        parser.add_argument(
+            '-pt',
+            '--priority',
+            default=0,
+            type=int,
+            help='Priority value for this request'
+        )
+        parser.add_argument(
+            '-a',
+            '--action',
+            required=True,
+            type=str,
+            help='action name'
+        )
+        parser.add_argument(
+            '-ad',
+            '--action_desc',
+            required=False,
+            default='{}',
+            type=str,
+            help='action description in json str'
+        )
+        parser.add_argument(
+            '-F',
+            '--fleet',
+            type=str,
+            help='Fleet name, should define tgt with robot'
+        )
+        parser.add_argument(
+            '-R',
+            '--robot',
+            type=str,
+            help='Robot name, should define tgt with fleet'
+        )
+        parser.add_argument(
+            "--use_sim_time",
+            action="store_true",
+            help='Use sim time, default: false'
+        )
+        parser.add_argument(
+            "--use_tool_sink",
+            action="store_true",
+            help='Use tool sink during perform action, \
+                                default: false'
+        )
+        parser.add_argument(
+            '-o',
+            '--orientation',
+            required=False,
+            type=float,
+            help='Orientation to face in degrees (optional)'
         )
 
         self.args = parser.parse_args(argv[1:])
@@ -78,7 +126,10 @@ class TaskRequester(Node):
             durability=Durability.TRANSIENT_LOCAL)
 
         self.pub = self.create_publisher(
-          ApiRequest, 'task_api_requests', transient_qos)
+            ApiRequest,
+            'task_api_requests',
+            transient_qos
+        )
 
         # enable ros sim time
         if self.args.use_sim_time:
@@ -103,7 +154,7 @@ class TaskRequester(Node):
         # Set task request start time
         now = self.get_clock().now().to_msg()
         now.sec = now.sec + self.args.start_time
-        start_time = now.sec * 1000 + round(now.nanosec/10**6)
+        start_time = now.sec * 1000 + round(now.nanosec / 10**6)
         request["unix_millis_earliest_start_time"] = start_time
         # todo(YV): Fill priority after schema is added
 
@@ -136,23 +187,34 @@ class TaskRequester(Node):
             for start in self.args.starts:
                 go_to_description = {'waypoint': start}
                 if self.args.orientation is not None:
-                    go_to_description['orientation'] = (self.args.orientation*math.pi/180.0)
-                activities.append({
+                    go_to_description['orientation'] = (
+                        self.args.orientation * math.pi / 180.0
+                    )
+                activities.append(
+                    {
                         "category": "go_to_place",
                         "description": go_to_description
-                    })
+                    }
+                )
                 _add_action()
-                activities.append({
+                activities.append(
+                    {
                         "category": "go_to_place",
                         "description": "point_2"
-                    })               
+                    }
+                )
 
         # Add activities to phases
-        description["phases"].append({
+        description["phases"].append(
+            {
                 "activity": {
                     "category": "sequence",
-                    "description": {"activities": activities}}
-            })
+                    "description": {
+                        "activities": activities
+                    }
+                }
+            }
+        )
 
         request["description"] = description
         payload["request"] = request
@@ -166,7 +228,7 @@ class TaskRequester(Node):
             ApiResponse, 'task_api_responses', receive_response, 10
         )
 
-        print(f"msg: \n{json.dumps(payload, indent=2)}")
+        self.get_logger().info(f"msg: \n{json.dumps(payload, indent=2)}")
         self.pub.publish(msg)
 
 
