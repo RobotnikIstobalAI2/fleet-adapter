@@ -186,7 +186,7 @@ class RobotAPI:
         string,
         debug_level='INFO'
     ):
-        print(string)
+        # print(string, flush=True)
         if debug_level == "INFO":
             self._logger.info(string)
         if debug_level == "DEBUG":
@@ -353,7 +353,10 @@ class RobotAPI:
             "goal/" + robot_name, json.dumps(data),
             2
         )
-        if self.feedback.get(robot_name) is not None and self.feedback[robot_name] == 1:
+        if (
+            self.feedback.get(robot_name) is not None
+                and self.feedback[robot_name] == 1
+        ):
             self.feedback[robot_name] = 0
             return True
         else:
@@ -366,7 +369,6 @@ class RobotAPI:
                       map_name: str):
         self.print(
             robot_name + " " + str(cmd_id) + " " + process + " " + map_name,
-            flush=True
         )
         return True
 
@@ -396,15 +398,14 @@ class RobotAPI:
                 )**2
             )
         )
-        self.print("Theta " + str(self.theta[robot_name]), flush=True)
-        self.print("Theta goal " + str(self.theta_goal[robot_name]), flush=True)
+        self.print("Theta " + str(self.theta[robot_name]))
+        self.print("Theta goal " + str(self.theta_goal[robot_name]))
         self.print(
             "Dif theta " + str(
                 abs(
                     self.theta[robot_name] - self.theta_goal[robot_name]
                 )
             ),
-            flush=True
         )
         # if (self.resultgoal.get(robot_name) \
         # is not None and self.resultgoal[robot_name] == 3):
@@ -422,10 +423,12 @@ class RobotAPI:
             ) <= 0.05
         ):
             self.resultgoal[robot_name] = 0
-            self.print("Navigation completed! " + robot_name, flush=True)
+            self.print("Navigation completed! " + robot_name)
             return True
         else:
-            # self.print("Navigation not completed " + robot_name + " " + str(distance), flush=True)
+            # self.print(
+            #     "Navigation not completed " + robot_name + " " + str(distance)
+            # )
             return False
 
     def process_completed(self, robot_name: str, cmd_id: int):
@@ -437,10 +440,10 @@ class RobotAPI:
         ''' Return the state of charge of the robot as a value between 0.0
             and 1.0. Else return None if any errors are encountered'''
         if self.battery.get(robot_name) is not None:
-            # self.print("Battery " + str(self.battery.get(robot_name)), flush=True)
+            # self.print("Battery " + str(self.battery.get(robot_name)))
             return self.battery[robot_name] / 100
         else:
-            # self.print("Battery none ", flush=True)
+            # self.print("Battery none ")
             return None
 
     def requires_replan(self, robot_name: str):
