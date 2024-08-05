@@ -289,10 +289,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 self._stopping_thread.join()
 
     def stop(self):
-        if self.debug:
-            plan_id = self.update_handle.unstable_current_plan_id()
         self.node.get_logger().debug(
-            f'stop for {self.name} with PlanId {plan_id}'
+            f'stop for {self.name} with PlanId'
+            f'{self.update_handle.unstable_current_plan_id()}'
         )
 
         self.interrupt()
@@ -332,8 +331,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         path_finished_callback
     ):
 
-        if self.debug:
-            plan_id = self.update_handle.unstable_current_plan_id()
+        # if self.debug:
+        #     plan_id = self.update_handle.unstable_current_plan_id()
         self.interrupt()
         with self._lock:
             self._follow_path_thread = None
