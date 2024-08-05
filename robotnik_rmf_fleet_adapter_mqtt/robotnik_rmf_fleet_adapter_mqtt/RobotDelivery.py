@@ -17,10 +17,7 @@ import rmf_dispenser_msgs.msg as dispenser_msgs
 import rmf_ingestor_msgs.msg as ingestor_msgs
 import rmf_task_msgs.msg as task_msgs
 
-import rclpy
-import time
 from rclpy.node import Node
-from functools import partial
 import json
 
 DISPENSER_RESULT_ACKNOWLEDGED = 0

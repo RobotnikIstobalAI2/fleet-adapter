@@ -28,7 +28,6 @@ from rclpy.qos import qos_profile_system_default
 
 import rmf_adapter as adpt
 import rmf_adapter.plan as plan
-import rmf_adapter.schedule as schedule
 
 from rmf_fleet_msgs.msg import DockSummary, ModeRequest, RobotMode
 from rmf_door_msgs.msg import DoorRequest, DoorState
