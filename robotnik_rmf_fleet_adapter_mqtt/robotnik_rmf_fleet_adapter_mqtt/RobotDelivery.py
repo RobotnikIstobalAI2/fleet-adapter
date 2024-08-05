@@ -113,7 +113,12 @@ class DeliveryTask(Node):
                 self.state_task[robot_name] = DISPENSER_REQUEST
                 self.api.pub_dispenser_requests(robot_name, task)
 
-    def _dispenser_results_cb(self, client, userdata, msg):
+    def _dispenser_results_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         robot_name = msg.topic.split("/")[1]
         self.get_logger().info('REQUEST_ID: "%s"' % robot_name)
         self.state_task[robot_name] = DISPENSER_RESULT
@@ -136,7 +141,12 @@ class DeliveryTask(Node):
             self.state_task[robot_name] = INGESTOR_REQUEST
             self.api.pub_ingestor_requests(robot_name, task)
 
-    def _ingestor_results_cb(self, client, userdata, msg):
+    def _ingestor_results_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         robot_name = msg.topic.split("/")[1]
         self.state_task[robot_name] = INGESTOR_RESULT
         decoded_message = str(msg.payload.decode("utf-8"))
