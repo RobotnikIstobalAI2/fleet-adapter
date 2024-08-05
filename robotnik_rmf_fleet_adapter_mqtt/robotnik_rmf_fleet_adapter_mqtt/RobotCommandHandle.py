@@ -241,8 +241,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
 
     def next_cmd_id(self):
         self.current_cmd_id = self.current_cmd_id + 1
-        if self.debug:
-            print(f'Issuing cmd_id for {self.name}: {self.current_cmd_id}')
+        self.node.get_logger().debug(
+            f'Issuing cmd_id for {self.name}: {self.current_cmd_id}'
+        )
         return self.current_cmd_id
 
     def sleep_for(self, seconds):
@@ -267,11 +268,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.state = RobotState.IDLE
 
     def interrupt(self):
-        if self.debug:
-            print(
-                f'Interrupting {self.name} '
-                f'(latest cmd_id is {self.current_cmd_id})'
-            )
+        self.node.get_logger().debug(
+            f'Interrupting {self.name} '
+            f'(latest cmd_id is {self.current_cmd_id})'
+        )
         self._quit_dock_event.set()
         self._quit_path_event.set()
         self._quit_stopping_event.set()
@@ -291,7 +291,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
     def stop(self):
         if self.debug:
             plan_id = self.update_handle.unstable_current_plan_id()
-            print(f'stop for {self.name} with PlanId {plan_id}')
+        self.node.get_logger().debug(
+            f'stop for {self.name} with PlanId {plan_id}'
+        )
 
         self.interrupt()
         # Stop the robot. Tracking variables should remain unchanged.
@@ -379,9 +381,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                             target_pose[2]
                             + self.transforms['orientation_offset']
                         )
-                        print(
+                        self.node.get_logger().info(
                             str(x) + " " + str(y) + " " + str(theta),
-                            flush=True
                         )
                         response = self.api.navigate(
                             self.name,
@@ -484,7 +485,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             to initiate the robot specific process. This could be to start a
             cleaning process or load/unload a cart for delivery.
         '''
-        print("Docking iniciado", flush=True)
+        self.node.get_logger().info("Docking Started")
         self.battery = self.get_battery_soc()
         self.interrupt()
         with self._lock:
@@ -510,7 +511,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 self.next_cmd_id(),
                 [x, y, theta],
                 self.map_name)
-            print(
+            self.node.get_logger().info(
                 (
                     "Dock "
                     + str(x)
@@ -519,7 +520,6 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     + " "
                     + str(self.orientation_charger)
                 ),
-                flush=True
             )
             if response:
                 self.state = RobotState.MOVING
@@ -531,7 +531,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                     f"Retrying...")
             while self.state == RobotState.MOVING:
                 time.sleep(0.5)
-                print("robot_moving", flush=True)
+                self.node.get_logger().info("robot_moving")
                 # Check if we have reached the target
                 with self._lock:
                     print
@@ -551,7 +551,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                                 graph_index
                         else:
                             self.on_waypoint = None  # still on a lane
-                            print("still on a lane", flush=True)
+                            self.node.get_logger().info("still on a lane")
                     else:
                         # Update the lane the robot is on
                         lane = self.get_current_lane()
@@ -684,7 +684,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 if self.pub_action_execution is False:
                     self.api.publish_action_execution(self.name)
                     self.pub_action_execution = True
-                print("Aqui podemos hacer algo", flush=True)
+                self.node.get_logger().info("Robot is performing an action")
                 if not self.started_action:
                     self.started_action = True
                 self.update_handle.update_off_grid_position(
@@ -753,7 +753,7 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         last_pose = copy.copy(self.position)
         waypoints = []
         for i in range(len(wps)):
-            # print("Waypoints " + str(wps[i].position))
+            # self.node.get_logger().info(("Waypoints " + str(wps[i].position))
             waypoints.append(PlanWaypoint(i, wps[i]))
 
         # We assume the robot will backtack if the first waypoint in the plan
@@ -775,7 +775,8 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         if (self.perform_filtering is False):
             for i in range(len(waypoints)):
                 self.node.get_logger().info(
-                    f" [{self.name}] No filter waypoints {str(waypoints[i].position)}"
+                    f" [{self.name}] No filter waypoints "
+                    f"{str(waypoints[i].position)}"
                 )
             return (first, waypoints)
 
@@ -785,7 +786,10 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         while (not changed and index < len(waypoints)):
             if (self.dist(last_pose, waypoints[index].position) < threshold):
                 first = waypoints[index]
-                # print("Distance last pose and waypoints  " + str(first.position), flush=True)
+                # self.node.get_logger().info(
+                #     "Distance last pose and waypoints  "
+                #     + str(first.position)
+                # )
                 last_pose = waypoints[index].position
             else:
                 break
@@ -799,27 +803,47 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 while (not changed):
                     next_index = index + 1
                     if (next_index < len(waypoints)):
-                        if (self.dist(waypoints[next_index].position, waypoints[index].position) < threshold):
+                        if (
+                            self.dist(
+                                waypoints[next_index].position,
+                                waypoints[index].position
+                            ) < threshold
+                        ):
                             if (next_index == len(waypoints) - 1):
                                 # append last waypoint
                                 changed = True
                                 wp = waypoints[next_index]
-                                wp.approach_lanes = waypoints[parent_index].approach_lanes
-                                #print("Distance waypoint next  " + str(wp.position), flush=True)
+                                wp.approach_lanes = (
+                                    waypoints[parent_index].approach_lanes
+                                )
+                                # self.node.get_logger().info(
+                                #     "Distance waypoint next  "
+                                #     + str(wp.position)
+                                # )
                                 second.append(wp)
                         else:
                             # append if next waypoint changes
                             changed = True
                             wp = waypoints[index]
-                            wp.approach_lanes = waypoints[parent_index].approach_lanes
-                            print("Append if next waypoint changes  " + str(wp.position), flush=True)
+                            wp.approach_lanes = (
+                                waypoints[parent_index].approach_lanes
+                            )
+                            self.node.get_logger().info(
+                                "Append if next waypoint changes  "
+                                + str(wp.position)
+                            )
                             second.append(wp)
                     else:
                         # we add the current index to second
                         changed = True
                         wp = waypoints[index]
-                        wp.approach_lanes = waypoints[parent_index].approach_lanes
-                        print("Add the current index to second  " + str(wp.position), flush=True)
+                        wp.approach_lanes = (
+                            waypoints[parent_index].approach_lanes
+                        )
+                        self.node.get_logger().info(
+                            "Add the current index to second  "
+                            + str(wp.position)
+                        )
                         second.append(wp)
                     last_pose = waypoints[index].position
                     index = next_index
@@ -827,7 +851,9 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
                 index = index + 1
 
         # for i in range(len(second)):
-        #     self.node.get_logger().info(f" [{self.name}] Filter waypoints {str(second[i].position)}")
+        #     self.node.get_logger().info(
+        #         f" [{self.name}] Filter waypoints {str(second[i].position)}"
+        #     )
         return (first, second)
 
     def complete_robot_action(self):
@@ -850,13 +876,13 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
     def mode_request_cb(self, msg):
         if msg.fleet_name is None or msg.fleet_name != self.fleet_name or\
                 msg.robot_name is None or msg.robot_name != self.name:
-            print("Return request", flush=True)
+            self.node.get_logger().info("Return request")
             return
         if msg.mode.mode == RobotState.IDLE:
             self.complete_robot_action()
 
-    #When the rmf-core publishes to ROS2 in the /adapter_door_requests topic,
-    #the information is published in MQTT for the door_node to receive it.
+    # When the rmf-core publishes to ROS2 in the /adapter_door_requests topic,
+    # the information is published in MQTT for the door_node to receive it.
     def door_request_cb(self, msg):
         door_name = msg.door_name
         requested_mode = str(msg.requested_mode.value)
@@ -864,14 +890,18 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
         self.node.get_logger().info(f"Door mode {requested_mode}")
         self.api.publish_door_request(door_name, requested_mode)
 
-
-    def _finish_ae_cb(self, client, userdata, msg):
+    def _finish_ae_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         robot_name = msg.topic.split("/")[1]
-        decoded_message=str(msg.payload.decode("utf-8"))
+        decoded_message = str(msg.payload.decode("utf-8"))
         data = json.loads(decoded_message)['data']
-        print(data, flush=True)
-        print(self.name, flush=True)
-        print(robot_name,flush=True)
+        self.node.get_logger().info(data)
+        self.node.get_logger().info(self.name)
+        self.node.get_logger().info(robot_name)
         if (data is True) and (robot_name == self.name):
             mode = RobotMode()
             execution_notice = ModeRequest()
@@ -879,25 +909,42 @@ class RobotCommandHandle(adpt.RobotCommandHandle):
             execution_notice.robot_name = self.name
             execution_notice.mode.mode = RobotState.IDLE
             self.action_execution_pub.publish(execution_notice)
-    #When the door_node publishes to /door_state, from MQTT
-    #this information is received and published in ROS2.
-    #In the /door_states topic as well, but in the ROS2 topic of rmf-core
-    def door_state_cb(self, client, userdata, msg):
+
+    # When the door_node publishes to /door_state, from MQTT
+    # this information is received and published in ROS2.
+    # In the /door_states topic as well, but in the ROS2 topic of rmf-core
+    def door_state_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         decoded_message = str(msg.payload.decode("utf-8"))
         door_state_recv = json.loads(decoded_message)['text']
         door_name = door_state_recv[0]
         door_mode = door_state_recv[1]
-        print(door_name + " " + door_mode, flush=True)
+        self.node.get_logger().info(door_name + " " + door_mode)
         door_state = DoorState()
         door_state.door_name = door_name
         door_state.current_mode.value = int(door_mode)
         self.door_state_pub.publish(door_state)
 
-    def finish_dock_cb(self, client, userdata, msg):
+    def finish_dock_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         robot_name = msg.topic.split("/")[1]
         if robot_name == self.name:
             self.dock_finish = True
-    def finish_undock_cb(self, client, userdata, msg):
+
+    def finish_undock_cb(
+        self,
+        client,
+        userdata,
+        msg
+    ):
         robot_name = msg.topic.split("/")[1]
         if robot_name == self.name:
             self.undock_finish = True
