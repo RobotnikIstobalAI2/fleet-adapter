@@ -9,7 +9,7 @@ Launch custom mission. The currently scheduled task performs the following:
 
 ```bash
 docker exec -it open-rmf-fleet-adapter-1 bash
-ros2 run fleet_adapter_mqtt dispatch_action -s <start_point> -a teleop -F <fleet_name> -R <robot_name> -o <orientation>
+ros2 run robotnik_rmf_fleet_adapter_mqtt dispatch_action -s <start_point> -a teleop -F <fleet_name> -R <robot_name> -o <orientation>
 ```
 The fleet_name and robot_name are optional. If they are not specified, rmf-core will choose which robot to use for the mission.
 
