@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>robotnik_rmf_fleet_adapter_mqtt</name>
-  <version>0.2.1</version>
+  <version>0.2.2</version>
   <description>Robotnik MQTT RMF fleet adapter</description>
   <maintainer email="emji@ai2.upv.es">Emima Jiva</maintainer>
   <maintainer email="ggari@robotnik.es">Guillem Gari</maintainer>
