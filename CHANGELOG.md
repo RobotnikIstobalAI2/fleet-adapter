@@ -5,6 +5,7 @@
 ### Added
 - Added dispatch action package
 - Added door adapter package
+- Added more retrys to the connection in `robotnik_rmf_fleet_adapter_mqtt/RobotClientAPI.py`.
 - Added use of ros mirror if it's reachable
 - Added `container/compose` folder with compose files.
 - Added `container/environment` folder with the environment variables.
@@ -19,6 +20,8 @@
     - `VERSION` to indicate the repository version (branch or tag).
 
 ### Changed
+- Updated `README.md`, `CustomMission.md` and `CHANGELOG.md` files.
+- Updated the version of the `package.xml` and `setup.py` files to `0.2.2`.
 - Changed to robotnik public `robotnik/ros:humble-base-0.5.0` ros images as docker image base.
 - Changed to robotnik public `robotnik/ros:humble-builder-0.5.0` ros images as package builder intermediate image.
 - Use of `apt-fast` for parallel downloading for apt in the `Dockerfile`.
@@ -30,8 +33,15 @@
     - Environment variables are located in `container/environment`.
 
 ### Fixed
-- Refactor from ci.yaml (continuous integration) to cd.yaml (continuous delivery)
+- Refactor from ci.yaml (continuous integration) to cd.yaml (continuous delivery).
+- Refractor from `fleet-adapter` to `robotnik_rmf_fleet_adapter` repository name.
+- Refractor from `fleet_adapter_mqtt` to `robotnik_rmf_fleet_adapter_mqtt` package.
+- Fixed flux and minor format corrections in `robotnik_rmf_fleet_adapter_mqtt/RobotClientAPI.py`.
+- Fixed `plan_id` and minor format corrections in `robotnik_rmf_fleet_adapter_mqtt/RobotCommandHandle.py`.
+- Fixed `plan_id` and minor format corrections in `robotnik_rmf_fleet_adapter_mqtt/RobotDelivery.py`.
 
+### Removed
+- Unused unused modules.
 
 ## [0.2.0] - 2023-12-04
 
