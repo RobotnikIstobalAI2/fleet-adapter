@@ -1,8 +1,8 @@
-# fleet-adapter
+# robotnik_rmf_fleet_adapter
 
-The Fleet Adapter serves to connect the specific API of the Robotnik robotic fleet with the interfaces of the central RMF system, enabling the traffic negotiation. Consequently, it is responsible for managing communication between the fleet and the several interfaces of the OpenRMF infrastructure.
+The Robotnik Fleet Adapter for the Open RMF serves to connect the specific API of the Robotnik robotic fleet with the interfaces of the central RMF system, enabling the traffic negotiation. Consequently, it is responsible for managing communication between the fleet and the several interfaces of the OpenRMF infrastructure.
 
-Launch the `fleet-adapter` adds new elements at the visualization which is started with the `rmf-core`.
+Launch the `robotnik_rmf_fleet_adapter` adds new elements at the visualization which is started with the `rmf-core`.
 
 ## Configuration
 
@@ -20,20 +20,19 @@ The ([adapter_config_files.env](./container/environment/fleet_adapter/adapter_co
 ## Image build
 
 ```bash
-git clone git@github.com:RobotnikIstobalAI2/fleet-adapter.git
-cd fleet-adapter
+git clone git@github.com:RobotnikIstobalAI2/robotnik_rmf_fleet_adapter.git
+cd robotnik_rmf_fleet_adapter
 git checkout humble-devel
 cd container/builder
 docker compose build
 cd ..
 ```
 
-## Launch docker with fleet-adapter
+## Launch docker with robotnik_rmf_fleet_adapter
 
 ```bash
 docker compose up -d
 ```
-
 <p align="center">
-  <img src="doc/fleetadapter.png" height="475" />
+  <img src="doc/fleet_adapter.png" height="370" />
 </p>
