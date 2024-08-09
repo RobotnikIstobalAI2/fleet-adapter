@@ -22,7 +22,7 @@
 # Version: 1.0
 # Rev:
 #
-# Proyecto "WASHCARROB"
+# Project "WASHCARROB"
 # Version: 1.0
 # Rev: 2023. cambios introducidos  
 
