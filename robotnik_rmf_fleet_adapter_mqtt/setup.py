@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'fleet_adapter=robotnik_rmf_fleet_adapter_mqtt.fleet_adapter:main',
-            'dispatch_action=robotnik_rmf_fleet_adapter_mqtt.dispatch_action:main'
+            'dispatch_action=robotnik_rmf_fleet_adapter_mqtt.dispatch_action:main',
+            'cancel_task=robotnik_rmf_fleet_adapter_mqtt.cancel_task:main'
         ],
     },
 )
