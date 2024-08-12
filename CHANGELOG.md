@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Added
+- Added the feature to cancel a started task
+    - Added the `robotnik_rmf_fleet_adapter_mqtt/cancel_task.py` file.
+    - Added the documentation to cancel a started task in the `CancelStartedTask.md` file.
 - Added dispatch action package
 - Added door adapter package
 - Added more retrys to the connection in `robotnik_rmf_fleet_adapter_mqtt/RobotClientAPI.py`.
@@ -22,6 +25,7 @@
 ### Changed
 - Updated `README.md`, `CustomMission.md` and `CHANGELOG.md` files.
 - Updated the version of the `package.xml` and `setup.py` files to `0.2.2`.
+- Updated the `robotnik_rmf_fleet_adapter_mqtt/setup.py` to add the `cancel_task` exec.
 - Changed to robotnik public `robotnik/ros:humble-base-0.5.0` ros images as docker image base.
 - Changed to robotnik public `robotnik/ros:humble-builder-0.5.0` ros images as package builder intermediate image.
 - Use of `apt-fast` for parallel downloading for apt in the `Dockerfile`.
