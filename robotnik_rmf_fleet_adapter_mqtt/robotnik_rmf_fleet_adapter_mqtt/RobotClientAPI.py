@@ -420,7 +420,7 @@ class RobotAPI:
                         self.theta_goal[robot_name]
                     )
                 )
-            ) <= 0.05
+            ) <= 0.15
         ):
             self.resultgoal[robot_name] = 0
             self.print("Navigation completed! " + robot_name)
